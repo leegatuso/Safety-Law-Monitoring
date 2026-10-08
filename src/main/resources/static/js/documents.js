@@ -1,0 +1,299 @@
+// "사규" 탭: 회사 문서(절차서/지침서/작업표준) CRUD, 키워드(해시태그),
+// 근거 법령 매핑 체크박스.
+
+import { state, api, toast, fmtDate, escapeHtml } from "./core.js";
+import { sortLaws, lawCategoryRank } from "./laws.js";
+import { loadDashboard } from "./dashboard.js";
+
+// 근거 법령 체크박스 목록은 구분 필터/검색어에 따라 계속 다시 그려지므로,
+// 어떤 법령이 선택됐는지는 화면의 :checked 상태가 아니라 이 Set으로 따로
+// 추적한다(필터링으로 화면에서 안 보이는 항목도 선택은 유지되어야 함).
+let selectedDocLawIds = new Set();
+
+export async function loadDocuments() {
+  if (!document.getElementById("documentsTable")) return;
+  try {
+    const [documents, laws] = await Promise.all([api("/api/documents"), api("/api/laws")]);
+    state.documents = documents;
+    state.laws = laws;
+    renderDocumentsTable();
+  } catch (e) {
+    toast(`문서 목록 로드 실패: ${e.message}`, true);
+  }
+}
+
+function renderDocLawCheckboxes() {
+  const el = document.getElementById("docLawCheckboxes");
+  if (!state.laws.length) {
+    el.innerHTML = `<span class="hint">먼저 "법령 마스터" 탭에서 법령을 등록하세요.</span>`;
+    return;
+  }
+  const categoryFilter = document.getElementById("docLawCategoryFilter").value;
+  const searchText = document.getElementById("docLawSearchInput").value.trim();
+  const filtered = sortLaws(state.laws).filter((l) => {
+    if (categoryFilter !== "" && String(lawCategoryRank(l.category)) !== categoryFilter) return false;
+    if (searchText && !l.name.includes(searchText)) return false;
+    return true;
+  });
+  if (!filtered.length) {
+    el.innerHTML = `<span class="hint">조건에 맞는 법령이 없습니다.</span>`;
+    return;
+  }
+  el.innerHTML = filtered
+    .map(
+      (l) => `
+    <label>
+      <input type="checkbox" class="doc-law-checkbox" value="${l.id}" ${selectedDocLawIds.has(l.id) ? "checked" : ""}>
+      ${escapeHtml(l.name)} <span class="hint">(${escapeHtml(l.category || "-")})</span>
+    </label>
+  `
+    )
+    .join("");
+  el.querySelectorAll(".doc-law-checkbox").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const id = Number(cb.value);
+      if (cb.checked) selectedDocLawIds.add(id);
+      else selectedDocLawIds.delete(id);
+    });
+  });
+}
+
+// "#밀폐공간 #공기호흡기" 같은 입력을 저장용 CSV("밀폐공간,공기호흡기")로,
+// 그 반대로도 변환한다. 공백/콤마 어느 쪽으로 구분해도 되고 "#"은 있어도
+// 없어도 된다.
+function normalizeTagsInput(raw) {
+  return (raw || "")
+    .split(/[\s,]+/)
+    .map((t) => t.replace(/^#/, "").trim())
+    .filter(Boolean)
+    .join(",");
+}
+
+function formatTagsForInput(tagsCsv) {
+  return (tagsCsv || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map((t) => `#${t}`)
+    .join(" ");
+}
+
+function renderTagChips(tagsCsv) {
+  const tags = (tagsCsv || "").split(",").map((t) => t.trim()).filter(Boolean);
+  if (!tags.length) return '<span class="hint">없음</span>';
+  return tags.map((t) => `<span class="tag-chip">#${escapeHtml(t)}</span>`).join(" ");
+}
+
+function openDocumentModal() {
+  document.getElementById("documentModalOverlay").hidden = false;
+}
+
+function closeDocumentModal() {
+  document.getElementById("documentModalOverlay").hidden = true;
+}
+
+// 체크된 사규 id들 - 일괄 삭제용. 표를 다시 그릴 때마다 초기화됨.
+let selectedDocumentIds = new Set();
+
+function updateDocumentsBulkToolbar() {
+  document.getElementById("documentsSelectedCount").textContent = `${selectedDocumentIds.size}건 선택됨`;
+  document.getElementById("documentsBulkDeleteBtn").disabled = selectedDocumentIds.size === 0;
+  const selectAll = document.getElementById("documentsSelectAllCheckbox");
+  if (selectAll) {
+    const total = document.querySelectorAll(".document-row-checkbox").length;
+    selectAll.checked = total > 0 && selectedDocumentIds.size === total;
+    selectAll.indeterminate = selectedDocumentIds.size > 0 && selectedDocumentIds.size < total;
+  }
+}
+
+async function deleteDocumentsBulk() {
+  if (selectedDocumentIds.size === 0) return;
+  const ids = Array.from(selectedDocumentIds);
+  if (!confirm(`선택한 사규 ${ids.length}건을 삭제할까요? (관련 매핑도 함께 삭제되며 되돌릴 수 없습니다)`)) return;
+  const btn = document.getElementById("documentsBulkDeleteBtn");
+  btn.disabled = true;
+  const results = await Promise.allSettled(ids.map((id) => api(`/api/documents/${id}`, { method: "DELETE" })));
+  const failed = results.filter((r) => r.status === "rejected").length;
+  if (failed) toast(`${ids.length - failed}건 삭제, ${failed}건 실패`, true);
+  else toast(`${ids.length}건을 삭제했습니다.`);
+  loadDocuments();
+  loadDashboard();
+}
+
+function renderDocumentsTable() {
+  const el = document.getElementById("documentsTable");
+  selectedDocumentIds = new Set();
+  if (!state.documents.length) {
+    el.innerHTML = `<div class="empty">등록된 사규가 없습니다.</div>`;
+    updateDocumentsBulkToolbar();
+    return;
+  }
+  const searchText = document.getElementById("documentsSearchInput").value.trim().toLowerCase();
+  const documents = searchText
+    ? state.documents.filter((d) =>
+        [d.doc_type, d.doc_number, d.title, d.revision_no, d.owner, d.tags, ...d.mapped_laws]
+          .some((v) => (v || "").toLowerCase().includes(searchText))
+      )
+    : state.documents;
+  if (!documents.length) {
+    el.innerHTML = `<div class="empty">"${escapeHtml(searchText)}"와(과) 일치하는 사규가 없습니다.</div>`;
+    updateDocumentsBulkToolbar();
+    return;
+  }
+  el.innerHTML = `
+    <table>
+      <thead><tr><th><input type="checkbox" id="documentsSelectAllCheckbox" title="전체 선택"></th><th>구분</th><th>문서번호</th><th>제목</th><th>개정번호</th><th>개정일자</th><th>담당자</th><th>키워드</th><th>근거 법령</th><th></th></tr></thead>
+      <tbody>
+        ${documents.map((d) => `
+          <tr>
+            <td><input type="checkbox" class="document-row-checkbox" data-document-id="${d.id}"></td>
+            <td>${escapeHtml(d.doc_type)}</td>
+            <td>${escapeHtml(d.doc_number || "-")}</td>
+            <td>${escapeHtml(d.title)}</td>
+            <td>${escapeHtml(d.revision_no || "-")}</td>
+            <td>${fmtDate(d.revision_date)}</td>
+            <td>${escapeHtml(d.owner || "-")}</td>
+            <td>${renderTagChips(d.tags)}</td>
+            <td>${d.mapped_laws.length ? d.mapped_laws.map(escapeHtml).join(", ") : '<span class="hint">없음</span>'}</td>
+            <td>
+              <a class="link-btn" href="/document-revisions?document_id=${d.id}">이력</a>
+              <button class="link-btn" data-edit-doc="${d.id}">수정</button>
+              <button class="link-btn" data-delete-doc="${d.id}">삭제</button>
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+  el.querySelectorAll(".document-row-checkbox").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const id = Number(cb.dataset.documentId);
+      if (cb.checked) selectedDocumentIds.add(id);
+      else selectedDocumentIds.delete(id);
+      updateDocumentsBulkToolbar();
+    });
+  });
+  document.getElementById("documentsSelectAllCheckbox").addEventListener("change", (ev) => {
+    el.querySelectorAll(".document-row-checkbox").forEach((cb) => {
+      cb.checked = ev.target.checked;
+      const id = Number(cb.dataset.documentId);
+      if (cb.checked) selectedDocumentIds.add(id);
+      else selectedDocumentIds.delete(id);
+    });
+    updateDocumentsBulkToolbar();
+  });
+  updateDocumentsBulkToolbar();
+  el.querySelectorAll("[data-edit-doc]").forEach((btn) => {
+    btn.addEventListener("click", () => startEditDocument(Number(btn.dataset.editDoc)));
+  });
+  el.querySelectorAll("[data-delete-doc]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("이 문서를 삭제할까요? (관련 매핑도 함께 삭제됩니다)")) return;
+      try {
+        await api(`/api/documents/${btn.dataset.deleteDoc}`, { method: "DELETE" });
+        toast("삭제했습니다.");
+        loadDocuments();
+      } catch (e) {
+        toast(`삭제 실패: ${e.message}`, true);
+      }
+    });
+  });
+}
+
+async function startEditDocument(id) {
+  const d = state.documents.find((x) => x.id === id);
+  if (!d) return;
+  document.getElementById("documentFormTitle").textContent = "사규 수정";
+  document.getElementById("docId").value = d.id;
+  document.getElementById("docType").value = d.doc_type;
+  document.getElementById("docNumber").value = d.doc_number || "";
+  document.getElementById("docTitle").value = d.title;
+  document.getElementById("docRevisionNo").value = d.revision_no || "";
+  document.getElementById("docRevisionDate").value = d.revision_date || "";
+  document.getElementById("docOwner").value = d.owner || "";
+  document.getElementById("docFileLink").value = d.file_link || "";
+  document.getElementById("docTags").value = formatTagsForInput(d.tags);
+  document.getElementById("docNote").value = d.note || "";
+  document.getElementById("docChangeReason").value = "";
+  document.getElementById("docChangedBy").value = "";
+  document.getElementById("docLawCategoryFilter").value = "";
+  document.getElementById("docLawSearchInput").value = "";
+  try {
+    const mappings = await api(`/api/mappings?document_id=${id}`);
+    selectedDocLawIds = new Set(mappings.map((m) => m.tracked_law_id));
+    renderDocLawCheckboxes();
+  } catch (e) {
+    toast(`매핑된 법령 로드 실패: ${e.message}`, true);
+  }
+  openDocumentModal();
+}
+
+function resetDocumentForm() {
+  document.getElementById("documentFormTitle").textContent = "사규 추가";
+  document.getElementById("documentForm").reset();
+  document.getElementById("docId").value = "";
+  document.getElementById("docLawCategoryFilter").value = "";
+  document.getElementById("docLawSearchInput").value = "";
+  selectedDocLawIds = new Set();
+  renderDocLawCheckboxes();
+}
+
+// 사규, 선택한 근거 법령, 변경 사유를 함께 보내 하나의 트랜잭션으로 저장한다.
+export function initDocumentForm() {
+  document.getElementById("documentForm").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const id = document.getElementById("docId").value;
+    const payload = {
+      law_ids: Array.from(selectedDocLawIds),
+      change_reason: document.getElementById("docChangeReason").value || null,
+      changed_by: document.getElementById("docChangedBy").value || null,
+      doc_type: document.getElementById("docType").value,
+      doc_number: document.getElementById("docNumber").value || null,
+      title: document.getElementById("docTitle").value,
+      revision_no: document.getElementById("docRevisionNo").value || null,
+      revision_date: document.getElementById("docRevisionDate").value || null,
+      owner: document.getElementById("docOwner").value || null,
+      file_link: document.getElementById("docFileLink").value || null,
+      tags: normalizeTagsInput(document.getElementById("docTags").value) || null,
+      note: document.getElementById("docNote").value || null,
+    };
+    try {
+      if (id) {
+        await api(`/api/documents/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+        toast("수정했습니다.");
+      } else {
+        await api("/api/documents", { method: "POST", body: JSON.stringify(payload) });
+        toast("추가했습니다.");
+      }
+      
+      resetDocumentForm();
+      closeDocumentModal();
+      loadDocuments();
+      loadDashboard();
+    } catch (e) {
+      toast(`저장 실패: ${e.message}`, true);
+    }
+  });
+  document.getElementById("docCancelBtn").addEventListener("click", () => {
+    resetDocumentForm();
+    closeDocumentModal();
+  });
+  document.getElementById("docModalCloseBtn").addEventListener("click", () => {
+    resetDocumentForm();
+    closeDocumentModal();
+  });
+  document.getElementById("docAddBtn").addEventListener("click", () => {
+    resetDocumentForm();
+    openDocumentModal();
+  });
+  document.getElementById("documentModalOverlay").addEventListener("click", (ev) => {
+    if (ev.target.id === "documentModalOverlay") {
+      resetDocumentForm();
+      closeDocumentModal();
+    }
+  });
+  document.getElementById("documentsSearchInput").addEventListener("input", renderDocumentsTable);
+  document.getElementById("documentsBulkDeleteBtn").addEventListener("click", deleteDocumentsBulk);
+  document.getElementById("docLawCategoryFilter").addEventListener("change", renderDocLawCheckboxes);
+  document.getElementById("docLawSearchInput").addEventListener("input", renderDocLawCheckboxes);
+}

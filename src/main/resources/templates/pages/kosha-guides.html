@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
+<body>
+<section th:fragment="content">
+<section id="tab-kosha-guides" class="tab-panel active">
+      <div class="panel-box">
+        <div class="row" style="justify-content: space-between; margin-bottom: 0;">
+          <h2 style="margin: 0;">KOSHA 가이드 등록</h2>
+          <div class="row" style="margin-bottom: 0;">
+            <button id="koshaGuideSyncBtn" class="btn">API로 동기화</button>
+            <button id="koshaGuideAddBtn" class="btn btn-primary">+ 가이드 추가</button>
+          </div>
+        </div>
+        <p class="hint">
+          한국산업안전보건공단(KOSHA)이 발간하는 기술지침(KOSHA GUIDE)을 관리하는 화면입니다.
+          <b>"API로 동기화"</b> 버튼으로 전체 목록을 자동으로 채울 수 있고, 그 외에는 <b>"가이드 추가"</b>로 한 건씩
+          입력하거나 아래 "여러 건 한 번에 붙여넣기"로 갖고 계신 목록을 한 번에 등록할 수 있습니다.
+        </p>
+        <p id="koshaGuideSyncStatus" class="hint">
+</p>
+        <details>
+          <summary>여러 건 한 번에 붙여넣기 (일괄 등록)</summary>
+          <p class="hint">
+            한 줄에 하나씩, <b>지침번호, 분야, 제목, 제개정일자(YYYYMMDD), 링크</b> 순서로 쉼표(,)나 탭으로
+            구분해서 붙여넣으세요. 지침번호가 이미 등록되어 있으면 그 항목을 덮어쓰고, 없으면 새로 추가합니다
+            (같은 목록을 다시 붙여넣어도 중복 등록되지 않습니다). 지침번호를 모르면 맨 앞을 비워두고 쉼표만
+            남겨도 됩니다.<br />
+            예) <code>G-68-2022,안전분야,밀폐공간 작업 안전보건에 관한 기술지침,20220401,https://example.com/guide.pdf</code>
+          </p>
+          <textarea id="koshaGuideBulkInput" rows="6" placeholder="G-68-2022,안전분야,밀폐공간 작업 안전보건에 관한 기술지침,20220401,https://...">
+</textarea>
+          <div class="form-actions">
+            <button id="koshaGuideBulkImportBtn" class="btn">붙여넣은 목록 일괄 등록</button>
+            <span id="koshaGuideBulkResult" class="hint">
+</span>
+          </div>
+        </details>
+      </div>
+
+      <div class="panel-box">
+        <div class="row" style="justify-content: space-between; margin-bottom: 0;">
+          <h2 style="margin: 0;">본문 검색</h2>
+          <button id="koshaGuideCacheContentBtn" class="btn">본문 캐시 채우기</button>
+        </div>
+        <p class="hint">
+          지침번호·제목뿐 아니라, 본문(PDF 원문 텍스트)까지 대상으로 검색해 미리보기를 보여줍니다. 다만 동기화나
+          일괄 등록은 원문 링크만 주고 본문 텍스트 자체는 주지 않으므로, 검색에서 실제 내용까지 찾으려면 먼저
+          <b>"본문 캐시 채우기"</b>를 눌러 원문 링크가 있는 가이드들의 PDF에서 텍스트를 미리 뽑아둬야 합니다
+          (PDF를 직접 첨부한 가이드는 첨부하는 순간 자동으로 채워집니다). 한 번 누르면 남은 건수가 0이 될 때까지
+          (또는 더 이상 진행이 안 될 때까지) 자동으로 이어서 처리합니다. 이미 캐시해뒀고 그 뒤로 원문 링크가
+          바뀌지 않은 항목은 건너뛰므로, 나중에 다시 눌러도 새로 개정되어 링크가 바뀐 항목만 처리합니다.
+        </p>
+        <p id="koshaGuideCacheContentStatus" class="hint">
+</p>
+        <div class="row">
+          <input id="koshaGuideSearchInput" type="text" placeholder="키워드로 검색 (예: 밀폐공간)" style="flex: 1;" />
+          <button id="koshaGuideSearchBtn" class="btn btn-primary">검색</button>
+        </div>
+        <div id="koshaGuideSearchResults" class="table-wrap">
+</div>
+      </div>
+
+      <div class="panel-box">
+        <h2>등록된 KOSHA 가이드</h2>
+        <p class="hint">
+          제목을 누르면 동기화/등록 시 받아온 원문 링크로 바로 이동합니다. 원문 링크가 없는 항목은
+          제목이 클릭되지 않습니다 - "수정"에서 원문 링크를 직접 채워두거나, API 동기화가 링크를 못
+          채워온 경우라면 "수정"에서 PDF 파일을 직접 첨부해도 그때부터 클릭할 수 있습니다.
+        </p>
+        <div class="row">
+          <input id="koshaGuideFilterInput" type="text" placeholder="지침번호/제목/분야로 빠르게 찾기" />
+        </div>
+        <div class="row">
+          <span id="koshaGuidesSelectedCount" class="hint">0건 선택됨</span>
+          <button id="koshaGuidesBulkDeleteBtn" class="btn btn-danger" disabled>선택 항목 삭제</button>
+        </div>
+        <div id="koshaGuidesTable" class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>명칭</th>
+<th>구분 / 상태</th>
+</tr>
+</thead>
+<tbody>
+<tr th:each="item : ${guides}">
+<td th:text="${item.title}">
+</td>
+<td th:text="${item.code}">
+</td>
+</tr>
+<tr th:if="${#lists.isEmpty(guides)}">
+<td colspan="2">등록된 항목이 없습니다.</td>
+</tr>
+</tbody>
+</table>
+</div>
+      </div>
+    </section>
+<div id="koshaGuideModalOverlay" class="modal-overlay" hidden>
+      <div class="modal-box">
+        <button type="button" id="koshaGuideModalCloseBtn" class="modal-close" title="닫기" aria-label="닫기">&times;</button>
+        <h2 id="koshaGuideFormTitle">가이드 추가</h2>
+        <form id="koshaGuideForm" class="grid-form">
+          <input type="hidden" id="koshaGuideId" />
+          <label>지침번호 <input id="koshaGuideCode" type="text" placeholder="G-68-2022" />
+</label>
+          <label>분야 <input id="koshaGuideField" type="text" placeholder="안전분야" />
+</label>
+          <label class="full">제목 <input id="koshaGuideTitle" type="text" required />
+</label>
+          <label>제개정일자 <input id="koshaGuideIssuedDate" type="text" placeholder="YYYYMMDD" />
+</label>
+          <label>원문 링크 <input id="koshaGuideFileLink" type="text" />
+</label>
+          <div class="full">
+            PDF 직접 첨부
+            <p class="hint">
+              API 동기화는 원문 링크를 채워오지 못하는 경우가 많습니다 - 그럴 때 PDF 파일을 여기서 직접 올려두면,
+              위 "원문 링크"가 이 서버 안에 저장된 그 파일을 가리키도록 자동으로 채워집니다(외부로 전송되지 않습니다).
+            </p>
+            <div class="row">
+              <input id="koshaGuideFileUploadInput" type="file" accept="application/pdf" />
+              <button type="button" id="koshaGuideFileUploadBtn" class="btn">업로드</button>
+              <button type="button" id="koshaGuideFileDeleteBtn" class="link-btn" hidden>첨부 삭제</button>
+            </div>
+            <p id="koshaGuideFileUploadHint" class="hint">
+</p>
+          </div>
+          <label class="full">본문(선택 - 입력해두면 키워드 검색 대상에 포함됩니다) <textarea id="koshaGuideContent">
+</textarea>
+</label>
+          <label class="full">비고 <textarea id="koshaGuideNote">
+</textarea>
+</label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">저장</button>
+            <button type="button" id="koshaGuideCancelBtn" class="btn">취소</button>
+          </div>
+        </form>
+      </div>
+    </div>
+<div id="koshaGuidePreviewModalOverlay" class="modal-overlay" hidden>
+      <div class="modal-box modal-wide">
+        <button type="button" id="koshaGuidePreviewCloseBtn" class="modal-close" title="닫기" aria-label="닫기">&times;</button>
+        <h2 id="koshaGuidePreviewTitle">
+</h2>
+        <p id="koshaGuidePreviewMeta" class="hint">
+</p>
+        <div id="koshaGuidePreviewBody" class="preview-body">
+</div>
+        <div class="form-actions">
+          <a id="koshaGuidePreviewOpenLink" href="#" target="_blank" rel="noopener" class="btn btn-primary">원문 열기</a>
+          <button type="button" id="koshaGuidePreviewCloseBtn2" class="btn">닫기</button>
+        </div>
+      </div>
+    </div>
+</section>
+</body>
+</html>

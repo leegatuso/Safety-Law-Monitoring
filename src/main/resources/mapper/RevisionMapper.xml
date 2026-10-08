@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.RevisionMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.LawRevision">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="tracked_law_id" property="trackedLawId" javaType="java.lang.Long"/>
+        <result column="promulgation_no" property="promulgationNo" javaType="java.lang.String"/>
+        <result column="promulgation_date" property="promulgationDate" javaType="java.lang.String"/>
+        <result column="enforcement_date" property="enforcementDate" javaType="java.lang.String"/>
+        <result column="previous_promulgation_no" property="previousPromulgationNo" javaType="java.lang.String"/>
+        <result column="previous_promulgation_date" property="previousPromulgationDate" javaType="java.lang.String"/>
+        <result column="previous_enforcement_date" property="previousEnforcementDate" javaType="java.lang.String"/>
+        <result column="detected_at" property="detectedAt" javaType="java.lang.String"/>
+        <result column="review_status" property="reviewStatus" javaType="java.lang.String"/>
+        <result column="reviewer" property="reviewer" javaType="java.lang.String"/>
+        <result column="reviewed_at" property="reviewedAt" javaType="java.lang.String"/>
+        <result column="note" property="note" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result column="raw_data" property="rawData" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+    </resultMap>
+    <sql id="columns">id,
+        tracked_law_id,
+        promulgation_no,
+        promulgation_date,
+        enforcement_date,
+        previous_promulgation_no,
+        previous_promulgation_date,
+        previous_enforcement_date,
+        detected_at,
+        review_status,
+        reviewer,
+        reviewed_at,
+        note,
+        raw_data</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_revision WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_revision ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_revision (id,
+        tracked_law_id,
+        promulgation_no,
+        promulgation_date,
+        enforcement_date,
+        previous_promulgation_no,
+        previous_promulgation_date,
+        previous_enforcement_date,
+        detected_at,
+        review_status,
+        reviewer,
+        reviewed_at,
+        note,
+        raw_data) VALUES (#{id,jdbcType=NUMERIC},
+        #{trackedLawId,jdbcType=NUMERIC},
+        #{promulgationNo,jdbcType=VARCHAR},
+        #{promulgationDate,jdbcType=VARCHAR},
+        #{enforcementDate,jdbcType=VARCHAR},
+        #{previousPromulgationNo,jdbcType=VARCHAR},
+        #{previousPromulgationDate,jdbcType=VARCHAR},
+        #{previousEnforcementDate,jdbcType=VARCHAR},
+        #{detectedAt,jdbcType=VARCHAR},
+        #{reviewStatus,jdbcType=VARCHAR},
+        #{reviewer,jdbcType=VARCHAR},
+        #{reviewedAt,jdbcType=VARCHAR},
+        #{note,jdbcType=CLOB},
+        #{rawData,jdbcType=CLOB})
+    </insert>
+    <update id="update">UPDATE slm_revision SET tracked_law_id = #{trackedLawId,jdbcType=NUMERIC},
+        promulgation_no = #{promulgationNo,jdbcType=VARCHAR},
+        promulgation_date = #{promulgationDate,jdbcType=VARCHAR},
+        enforcement_date = #{enforcementDate,jdbcType=VARCHAR},
+        previous_promulgation_no = #{previousPromulgationNo,jdbcType=VARCHAR},
+        previous_promulgation_date = #{previousPromulgationDate,jdbcType=VARCHAR},
+        previous_enforcement_date = #{previousEnforcementDate,jdbcType=VARCHAR},
+        detected_at = #{detectedAt,jdbcType=VARCHAR},
+        review_status = #{reviewStatus,jdbcType=VARCHAR},
+        reviewer = #{reviewer,jdbcType=VARCHAR},
+        reviewed_at = #{reviewedAt,jdbcType=VARCHAR},
+        note = #{note,jdbcType=CLOB},
+        raw_data = #{rawData,jdbcType=CLOB} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_revision WHERE id = #{id}</delete>
+    <select id="selectList" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_revision r
+        <where>
+            <if test="status != null and status != ''">review_status=#{status}</if>
+            <if test="lawId != null">AND tracked_law_id=#{lawId}</if>
+            <if test="mappedOnly">AND EXISTS(SELECT 1 FROM slm_mapping m WHERE m.tracked_law_id=r.tracked_law_id)</if>
+        </where>
+        ORDER BY detected_at DESC,id DESC FETCH FIRST #{limit} ROWS ONLY
+    </select>
+    <select id="selectPending" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_revision r
+    WHERE review_status IN ('미검토','검토중')
+      AND EXISTS (SELECT 1 FROM slm_law l WHERE l.id=r.tracked_law_id AND l.is_active=1)
+    ORDER BY detected_at DESC,id DESC FETCH FIRST #{limit} ROWS ONLY
+    </select>
+    <select id="selectForLaws" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_revision
+    WHERE tracked_law_id IN
+        <foreach collection="lawIds" item="lawId" open="(" separator="," close=")">#{lawId}</foreach>
+        <if test="status != null and status != ''">AND review_status=#{status}</if>
+        <if test="pendingOnly">AND review_status IN ('미검토','검토중')</if>
+        ORDER BY detected_at DESC,id DESC
+    </select>
+</mapper>

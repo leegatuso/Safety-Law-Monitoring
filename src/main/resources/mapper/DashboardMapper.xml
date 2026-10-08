@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.DashboardMapper">
+    <select id="counts" resultType="com.company.safetylaw.dto.DashboardCounts">SELECT (SELECT MAX(r.id) FROM slm_revision r JOIN slm_law l ON l.id=r.tracked_law_id WHERE l.is_active=1 AND r.review_status='미검토') AS &quot;latestUnreviewedId&quot;,
+ (SELECT COUNT(*) FROM slm_law WHERE is_active=1) AS &quot;trackedLawCount&quot;,
+ (SELECT COUNT(*) FROM slm_document) AS &quot;documentCount&quot;,
+ (SELECT COUNT(*) FROM slm_law l WHERE l.is_active=1 AND NOT EXISTS(SELECT 1 FROM slm_mapping m WHERE m.tracked_law_id=l.id)) AS &quot;unmappedLawCount&quot;,
+ (SELECT COUNT(*) FROM slm_revision r JOIN slm_law l ON l.id=r.tracked_law_id WHERE l.is_active=1 AND r.review_status='미검토') AS &quot;unreviewedCount&quot;,
+ (SELECT COUNT(*) FROM slm_revision r JOIN slm_law l ON l.id=r.tracked_law_id WHERE l.is_active=1 AND r.review_status='검토중') AS &quot;inReviewCount&quot;,
+ (SELECT COUNT(*) FROM slm_revision r JOIN slm_law l ON l.id=r.tracked_law_id WHERE l.is_active=1 AND r.review_status='반영완료') AS &quot;reflectedCount&quot;,
+ (SELECT MAX(last_synced_at) FROM slm_law WHERE is_active=1) AS &quot;lastSyncAt&quot; FROM dual</select>
+</mapper>

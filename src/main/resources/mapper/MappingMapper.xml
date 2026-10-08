@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.MappingMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.DocumentLawMapping">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="document_id" property="documentId" javaType="java.lang.Long"/>
+        <result column="tracked_law_id" property="trackedLawId" javaType="java.lang.Long"/>
+        <result column="note" property="note" javaType="java.lang.String"/>
+        <result column="created_at" property="createdAt" javaType="java.lang.String"/>
+    </resultMap>
+    <sql id="columns">id, document_id, tracked_law_id, note, created_at</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_mapping WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_mapping ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_mapping (id,
+        document_id,
+        tracked_law_id,
+        note,
+        created_at) VALUES (#{id,jdbcType=NUMERIC},
+        #{documentId,jdbcType=NUMERIC},
+        #{trackedLawId,jdbcType=NUMERIC},
+        #{note,jdbcType=VARCHAR},
+        #{createdAt,jdbcType=VARCHAR})
+    </insert>
+    <update id="update">UPDATE slm_mapping SET document_id = #{documentId,jdbcType=NUMERIC},
+        tracked_law_id = #{trackedLawId,jdbcType=NUMERIC},
+        note = #{note,jdbcType=VARCHAR} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_mapping WHERE id = #{id}</delete>
+    <select id="selectList" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_mapping
+        <where>
+            <if test="documentId != null">document_id=#{documentId}</if>
+            <if test="lawId != null">AND tracked_law_id=#{lawId}</if>
+        </where>
+        ORDER BY id
+    </select>
+    <delete id="deleteForDocument">DELETE FROM slm_mapping WHERE document_id=#{documentId}</delete>
+</mapper>

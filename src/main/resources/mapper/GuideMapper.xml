@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.GuideMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.KoshaGuide">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="code" property="code" javaType="java.lang.String"/>
+        <result column="field" property="field" javaType="java.lang.String"/>
+        <result column="title" property="title" javaType="java.lang.String"/>
+        <result column="issued_date" property="issuedDate" javaType="java.lang.String"/>
+        <result column="file_link" property="fileLink" javaType="java.lang.String"/>
+        <result column="content" property="content" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result column="content_stale" property="contentStale" javaType="java.lang.Boolean"/>
+        <result column="note" property="note" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result column="created_at" property="createdAt" javaType="java.lang.String"/>
+        <result column="updated_at" property="updatedAt" javaType="java.lang.String"/>
+    </resultMap>
+    <sql id="columns">id, code, field, title, issued_date, file_link, content, content_stale, note, created_at, updated_at</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_guide WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_guide ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_guide (id,
+        code,
+        field,
+        title,
+        issued_date,
+        file_link,
+        content,
+        content_stale,
+        note,
+        created_at,
+        updated_at) VALUES (#{id,jdbcType=NUMERIC},
+        #{code,jdbcType=VARCHAR},
+        #{field,jdbcType=VARCHAR},
+        #{title,jdbcType=VARCHAR},
+        #{issuedDate,jdbcType=VARCHAR},
+        #{fileLink,jdbcType=VARCHAR},
+        #{content,jdbcType=CLOB},
+        #{contentStale,jdbcType=NUMERIC},
+        #{note,jdbcType=CLOB},
+        #{createdAt,jdbcType=VARCHAR},
+        #{updatedAt,jdbcType=VARCHAR})
+    </insert>
+    <update id="update">UPDATE slm_guide SET code = #{code,jdbcType=VARCHAR},
+        field = #{field,jdbcType=VARCHAR},
+        title = #{title,jdbcType=VARCHAR},
+        issued_date = #{issuedDate,jdbcType=VARCHAR},
+        file_link = #{fileLink,jdbcType=VARCHAR},
+        content = #{content,jdbcType=CLOB},
+        content_stale = #{contentStale,jdbcType=NUMERIC},
+        note = #{note,jdbcType=CLOB},
+        updated_at = #{updatedAt,jdbcType=VARCHAR} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_guide WHERE id = #{id}</delete>
+    <select id="selectCode" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_guide WHERE code=#{code}
+    </select>
+    <select id="selectList" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_guide
+        <where>
+            <if test="field != null and field != ''">field=#{field}</if>
+        </where>
+        ORDER BY title,id
+    </select>
+    <select id="search" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_guide WHERE INSTR(title,#{query}) &gt; 0 OR INSTR(code,#{query}) &gt; 0 OR INSTR(content,#{query}) &gt; 0 ORDER BY title,id FETCH FIRST 200 ROWS ONLY
+    </select>
+    <select id="selectPending" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_guide WHERE content_stale=1 AND file_link IS NOT NULL ORDER BY id FETCH FIRST #{limit} ROWS ONLY
+    </select>
+    <select id="countPending" resultType="long">SELECT COUNT(*) FROM slm_guide WHERE content_stale=1 AND file_link IS NOT NULL</select>
+</mapper>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.NewsMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.NewsItem">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="category" property="category" javaType="java.lang.String"/>
+        <result column="source_name" property="sourceName" javaType="java.lang.String"/>
+        <result column="title" property="title" javaType="java.lang.String"/>
+        <result column="link" property="link" javaType="java.lang.String"/>
+        <result column="guid" property="guid" javaType="java.lang.String"/>
+        <result column="published_at" property="publishedAt" javaType="java.lang.String"/>
+        <result column="fetched_at" property="fetchedAt" javaType="java.lang.String"/>
+        <result column="is_demo" property="isDemo" javaType="java.lang.Boolean"/>
+        <result column="is_archived" property="isArchived" javaType="java.lang.Boolean"/>
+    </resultMap>
+    <sql id="columns">id, category, source_name, title, link, guid, published_at, fetched_at, is_demo, is_archived</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_news WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_news ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_news (id,
+        category,
+        source_name,
+        title,
+        link,
+        guid,
+        published_at,
+        fetched_at,
+        is_demo,
+        is_archived) VALUES (#{id,jdbcType=NUMERIC},
+        #{category,jdbcType=VARCHAR},
+        #{sourceName,jdbcType=VARCHAR},
+        #{title,jdbcType=VARCHAR},
+        #{link,jdbcType=VARCHAR},
+        #{guid,jdbcType=VARCHAR},
+        #{publishedAt,jdbcType=VARCHAR},
+        #{fetchedAt,jdbcType=VARCHAR},
+        #{isDemo,jdbcType=NUMERIC},
+        #{isArchived,jdbcType=NUMERIC})
+    </insert>
+    <update id="update">UPDATE slm_news SET category = #{category,jdbcType=VARCHAR},
+        source_name = #{sourceName,jdbcType=VARCHAR},
+        title = #{title,jdbcType=VARCHAR},
+        link = #{link,jdbcType=VARCHAR},
+        guid = #{guid,jdbcType=VARCHAR},
+        published_at = #{publishedAt,jdbcType=VARCHAR},
+        fetched_at = #{fetchedAt,jdbcType=VARCHAR},
+        is_demo = #{isDemo,jdbcType=NUMERIC},
+        is_archived = #{isArchived,jdbcType=NUMERIC} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_news WHERE id = #{id}</delete>
+    <select id="selectCategory" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_news
+        <where>
+            <if test="category != null and category != ''">category=#{category}</if>
+        </where>
+        ORDER BY fetched_at DESC,id DESC FETCH FIRST #{limit} ROWS ONLY
+    </select>
+    <select id="selectGuid" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_news WHERE category=#{category} AND guid=#{guid}
+    </select>
+    <delete id="deleteExpired">DELETE FROM slm_news WHERE is_archived=0 AND COALESCE(published_at,fetched_at) &lt; #{cutoff}</delete>
+    <select id="selectDedupeWindow" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_news
+        <where>
+            <if test="cutoff != null">COALESCE(published_at,fetched_at) &gt;= #{cutoff}</if>
+        </where>
+    </select>
+    <sql id="searchSource">(SELECT id,
+        CASE WHEN category='accident' AND NOT (INSTR(title,'사망') &gt; 0 OR INSTR(title,'숨져') &gt; 0 OR INSTR(title,'숨진') &gt; 0 OR INSTR(title,'숨졌') &gt; 0 OR INSTR(title,'참변') &gt; 0 OR INSTR(title,'참사') &gt; 0 OR INSTR(title,'유족') &gt; 0 OR INSTR(title,'추락사') &gt; 0 OR INSTR(title,'끼임사') &gt; 0 OR INSTR(title,'목숨') &gt; 0 OR INSTR(title,'압사') &gt; 0 OR INSTR(title,'질식사') &gt; 0 OR INSTR(title,'익사') &gt; 0) THEN 'issue' ELSE category END category,
+      source_name,title,link,guid,published_at,fetched_at,is_demo,is_archived FROM slm_news) n</sql>
+    <sql id="searchWhere">
+        <where>
+            <choose>
+                <when test="category != null and category != ''">category=#{category}</when>
+                <otherwise>
+                    <if test="!issues">category &lt;&gt; 'issue'</if>
+                </otherwise>
+            </choose>
+            <if test="query != null and query != ''">AND INSTR(LOWER(title),LOWER(#{query})) &gt; 0</if>
+            <if test="from != null and from != ''">AND SUBSTR(COALESCE(published_at,fetched_at),1,10) &gt;= #{from}</if>
+            <if test="to != null and to != ''">AND SUBSTR(COALESCE(published_at,fetched_at),1,10) &lt;= #{to}</if>
+            <if test="archived != null">AND is_archived=#{archived,jdbcType=NUMERIC}</if>
+        </where>
+    </sql>
+    <select id="selectSearch" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM
+        <include refid="searchSource"/>
+        <include refid="searchWhere"/>
+        ORDER BY COALESCE(published_at,fetched_at) DESC,id DESC FETCH FIRST #{limit} ROWS ONLY
+    </select>
+    <select id="countSearch" resultType="int">
+        SELECT COUNT(*) FROM
+        <include refid="searchSource"/>
+        <include refid="searchWhere"/>
+    </select>
+</mapper>

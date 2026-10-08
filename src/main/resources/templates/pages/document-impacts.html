@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
+<body>
+<section th:fragment="content">
+<p>
+<a th:href="@{/document-revisions}">사규 자체의 개정 이력 보기</a>
+</p>
+<section id="tab-doc-revisions" class="tab-panel active">
+      <p class="hint">사규(회사 문서)와 관련된 개정 이력만 모아서 보여줍니다. "근거 법령"으로 직접 매핑했거나, "키워드(해시태그)"가 법령명/본문과 겹쳐 자동으로 매칭된 경우(<span class="tag-badge">#태그매칭</span> 표시) 모두 포함됩니다. 사규 추가/수정 화면에서 설정합니다.</p>
+      <div class="row">
+        <label>상태 필터:
+          <select id="docRevisionStatusFilter">
+            <option value="">전체</option>
+            <option value="미검토">미검토</option>
+            <option value="검토중">검토중</option>
+            <option value="반영완료">반영완료</option>
+            <option value="해당없음">해당없음</option>
+          </select>
+        </label>
+        <input id="docRevisionsSearchInput" type="text" placeholder="법령명/사규명으로 빠르게 찾기" />
+      </div>
+      <div class="row">
+        <span id="docRevisionsSelectedCount" class="hint">0건 선택됨</span>
+        <select id="docRevisionsBulkStatus">
+          <option value="미검토">미검토</option>
+          <option value="검토중">검토중</option>
+          <option value="반영완료">반영완료</option>
+          <option value="해당없음">해당없음</option>
+        </select>
+        <button id="docRevisionsBulkApplyBtn" class="btn" disabled>선택 항목 일괄 변경</button>
+      </div>
+      <div id="docRevisionsTable" class="table-wrap">
+</div>
+    </section>
+</section>
+</body>
+</html>

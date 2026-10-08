@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
+<body>
+<section th:fragment="content">
+<section class="tab-panel active" id="tab-document-revisions">
+<div class="page-heading">
+<h2>사규 개정 이력</h2>
+<p>사규 저장 당시의 버전, 변경 사유, 담당자와 근거 법령을 확인합니다. 기존 사규의 과거 이력은 자동으로 복원되지 않습니다.</p>
+</div>
+<form method="get" th:action="@{/document-revisions}" class="row">
+<input th:if="${documentId != null}" type="hidden" name="document_id" th:value="${documentId}"/>
+<input name="query" type="search" th:value="${query}" placeholder="사규명 검색" aria-label="사규명 검색"/>
+<button class="btn btn-primary">검색</button>
+<a class="btn" th:href="@{/document-impacts}">법령 개정에 따른 검토 대상</a>
+</form>
+<p class="hint">최신 200건을 표시합니다. 사규를 수정하면 이전 상태와 새 저장 이력이 보존됩니다.</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>사규</th>
+<th>문서 번호</th>
+<th>버전 / 개정일</th>
+<th>변경 사유</th>
+<th>담당자</th>
+<th>저장 시각 (UTC)</th>
+<th>상세</th>
+</tr>
+</thead>
+<tbody>
+<tr th:each="item : ${history}">
+<td th:text="${item.title}">
+</td>
+<td th:text="${item.docNumber}">
+</td>
+<td>
+<span th:text="${item.revisionNo}">
+</span>
+<br/>
+<span th:text="${item.revisionDate}">
+</span>
+</td>
+<td th:text="${item.changeReason}">
+</td>
+<td th:text="${item.changedBy}">
+</td>
+<td th:text="${item.changedAt}">
+</td>
+<td>
+<details>
+<summary>저장 내용</summary>
+<p>유형: <span th:text="${item.docType}">
+</span>
+</p>
+<p>담당 부서: <span th:text="${item.owner}">
+</span>
+</p>
+<p>태그: <span th:text="${item.tags}">
+</span>
+</p>
+<p>근거 법령 번호: <span th:text="${item.mappedLawIds}">
+</span>
+</p>
+<p style="white-space:pre-wrap" th:text="${item.note}">
+</p>
+<a th:if="${item.fileLink != null and !#strings.isEmpty(item.fileLink)}" th:href="${item.fileLink}" target="_blank" rel="noopener">당시 문서 링크</a>
+</details>
+</td>
+</tr>
+<tr th:if="${#lists.isEmpty(history)}">
+<td colspan="7">저장된 사규 개정 이력이 없습니다. 사규를 등록하거나 수정하면 기록됩니다.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+</body>
+</html>

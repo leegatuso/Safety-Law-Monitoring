@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
+<body>
+<section th:fragment="content">
+<section id="tab-revisions" class="tab-panel active">
+      <div class="row">
+        <label>상태 필터:
+          <select id="revisionStatusFilter">
+            <option value="">전체</option>
+            <option value="미검토">미검토</option>
+            <option value="검토중">검토중</option>
+            <option value="반영완료">반영완료</option>
+            <option value="해당없음">해당없음</option>
+          </select>
+        </label>
+        <input id="revisionsSearchInput" type="text" placeholder="법령명으로 빠르게 찾기" />
+        <span id="revisionLawFilterChip" hidden>
+</span>
+      </div>
+      <div class="row">
+        <span id="revisionsSelectedCount" class="hint">0건 선택됨</span>
+        <select id="revisionsBulkStatus">
+          <option value="미검토">미검토</option>
+          <option value="검토중">검토중</option>
+          <option value="반영완료">반영완료</option>
+          <option value="해당없음">해당없음</option>
+        </select>
+        <button id="revisionsBulkApplyBtn" class="btn" disabled>선택 항목 일괄 변경</button>
+        <button id="revisionsBulkDeleteBtn" class="btn btn-danger" disabled>선택 항목 삭제</button>
+      </div>
+      <div id="revisionsTable" class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>명칭</th>
+<th>구분 / 상태</th>
+</tr>
+</thead>
+<tbody>
+<tr th:each="item : ${revisions}">
+<td th:text="${item.trackedLawName}">
+</td>
+<td th:text="${item.reviewStatus}">
+</td>
+</tr>
+<tr th:if="${#lists.isEmpty(revisions)}">
+<td colspan="2">등록된 항목이 없습니다.</td>
+</tr>
+</tbody>
+</table>
+</div>
+    </section>
+</section>
+</body>
+</html>

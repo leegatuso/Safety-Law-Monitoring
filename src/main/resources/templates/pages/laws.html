@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
+<body>
+<section th:fragment="content">
+<section id="tab-laws" class="tab-panel active">
+      <div class="panel-box">
+        <h2>법령·고시 검색해서 추가</h2>
+        <div class="row">
+          <select id="searchSourceType">
+            <option value="all">전체(법령+행정규칙)</option>
+            <option value="law">법령(법률/시행령/시행규칙)</option>
+            <option value="admrul">행정규칙(고시/예규/훈령)</option>
+          </select>
+          <input id="searchQuery" type="text" placeholder="입력하면 자동으로 검색됩니다 (예: 산업안전보건법)" style="flex: 1; min-width: 240px;" />
+          <button id="searchBtn" class="btn">검색</button>
+        </div>
+        <div id="searchResults" class="table-wrap">
+</div>
+      </div>
+
+      <div class="panel-box">
+        <h2>현재 관리중인 법령</h2>
+        <div class="row">
+          <input id="lawsFilterInput" type="text" placeholder="이름/소관부처로 빠르게 찾기" />
+        </div>
+        <div id="lawsTable" class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>명칭</th>
+<th>구분 / 상태</th>
+</tr>
+</thead>
+<tbody>
+<tr th:each="item : ${laws}">
+<td th:text="${item.name}">
+</td>
+<td th:text="${item.category}">
+</td>
+</tr>
+<tr th:if="${#lists.isEmpty(laws)}">
+<td colspan="2">등록된 항목이 없습니다.</td>
+</tr>
+</tbody>
+</table>
+</div>
+      </div>
+    </section>
+</section>
+</body>
+</html>

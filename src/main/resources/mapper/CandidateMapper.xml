@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.CandidateMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.LawCandidate">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="source_type" property="sourceType" javaType="java.lang.String"/>
+        <result column="external_id" property="externalId" javaType="java.lang.String"/>
+        <result column="master_id" property="masterId" javaType="java.lang.String"/>
+        <result column="name" property="name" javaType="java.lang.String"/>
+        <result column="category" property="category" javaType="java.lang.String"/>
+        <result column="department" property="department" javaType="java.lang.String"/>
+        <result column="promulgation_no" property="promulgationNo" javaType="java.lang.String"/>
+        <result column="promulgation_date" property="promulgationDate" javaType="java.lang.String"/>
+        <result column="enforcement_date" property="enforcementDate" javaType="java.lang.String"/>
+        <result column="detail_link" property="detailLink" javaType="java.lang.String"/>
+        <result column="matched_keyword" property="matchedKeyword" javaType="java.lang.String"/>
+        <result column="status" property="status" javaType="java.lang.String"/>
+        <result column="first_seen_at" property="firstSeenAt" javaType="java.lang.String"/>
+    </resultMap>
+    <sql id="columns">id, source_type, external_id, master_id, name, category, department, promulgation_no, promulgation_date, enforcement_date, detail_link, matched_keyword, status, first_seen_at</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_candidate WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_candidate ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_candidate (id,
+        source_type,
+        external_id,
+        master_id,
+        name,
+        category,
+        department,
+        promulgation_no,
+        promulgation_date,
+        enforcement_date,
+        detail_link,
+        matched_keyword,
+        status,
+        first_seen_at) VALUES (#{id,jdbcType=NUMERIC},
+        #{sourceType,jdbcType=VARCHAR},
+        #{externalId,jdbcType=VARCHAR},
+        #{masterId,jdbcType=VARCHAR},
+        #{name,jdbcType=VARCHAR},
+        #{category,jdbcType=VARCHAR},
+        #{department,jdbcType=VARCHAR},
+        #{promulgationNo,jdbcType=VARCHAR},
+        #{promulgationDate,jdbcType=VARCHAR},
+        #{enforcementDate,jdbcType=VARCHAR},
+        #{detailLink,jdbcType=VARCHAR},
+        #{matchedKeyword,jdbcType=VARCHAR},
+        #{status,jdbcType=VARCHAR},
+        #{firstSeenAt,jdbcType=VARCHAR})
+    </insert>
+    <update id="update">UPDATE slm_candidate SET source_type = #{sourceType,jdbcType=VARCHAR},
+        external_id = #{externalId,jdbcType=VARCHAR},
+        master_id = #{masterId,jdbcType=VARCHAR},
+        name = #{name,jdbcType=VARCHAR},
+        category = #{category,jdbcType=VARCHAR},
+        department = #{department,jdbcType=VARCHAR},
+        promulgation_no = #{promulgationNo,jdbcType=VARCHAR},
+        promulgation_date = #{promulgationDate,jdbcType=VARCHAR},
+        enforcement_date = #{enforcementDate,jdbcType=VARCHAR},
+        detail_link = #{detailLink,jdbcType=VARCHAR},
+        matched_keyword = #{matchedKeyword,jdbcType=VARCHAR},
+        status = #{status,jdbcType=VARCHAR},
+        first_seen_at = #{firstSeenAt,jdbcType=VARCHAR} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_candidate WHERE id = #{id}</delete>
+    <select id="selectStatus" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_candidate WHERE status=#{status} ORDER BY first_seen_at DESC,id DESC
+    </select>
+    <select id="selectIdentity" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_candidate WHERE source_type=#{source} AND external_id=#{external}
+    </select>
+</mapper>

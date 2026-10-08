@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.ContentMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.LawContent">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="source_type" property="sourceType" javaType="java.lang.String"/>
+        <result column="external_id" property="externalId" javaType="java.lang.String"/>
+        <result column="master_id" property="masterId" javaType="java.lang.String"/>
+        <result column="name" property="name" javaType="java.lang.String"/>
+        <result column="category" property="category" javaType="java.lang.String"/>
+        <result column="department" property="department" javaType="java.lang.String"/>
+        <result column="promulgation_no" property="promulgationNo" javaType="java.lang.String"/>
+        <result column="promulgation_date" property="promulgationDate" javaType="java.lang.String"/>
+        <result column="enforcement_date" property="enforcementDate" javaType="java.lang.String"/>
+        <result column="detail_link" property="detailLink" javaType="java.lang.String"/>
+        <result column="content" property="content" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result column="article_content_len" property="articleContentLen" javaType="java.lang.Integer"/>
+        <result column="cached_at" property="cachedAt" javaType="java.lang.String"/>
+    </resultMap>
+    <sql id="columns">id, source_type, external_id, master_id, name, category, department, promulgation_no, promulgation_date, enforcement_date, detail_link, content, article_content_len, cached_at</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_content WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_content ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_content (id,
+        source_type,
+        external_id,
+        master_id,
+        name,
+        category,
+        department,
+        promulgation_no,
+        promulgation_date,
+        enforcement_date,
+        detail_link,
+        content,
+        article_content_len,
+        cached_at) VALUES (#{id,jdbcType=NUMERIC},
+        #{sourceType,jdbcType=VARCHAR},
+        #{externalId,jdbcType=VARCHAR},
+        #{masterId,jdbcType=VARCHAR},
+        #{name,jdbcType=VARCHAR},
+        #{category,jdbcType=VARCHAR},
+        #{department,jdbcType=VARCHAR},
+        #{promulgationNo,jdbcType=VARCHAR},
+        #{promulgationDate,jdbcType=VARCHAR},
+        #{enforcementDate,jdbcType=VARCHAR},
+        #{detailLink,jdbcType=VARCHAR},
+        #{content,jdbcType=CLOB},
+        #{articleContentLen,jdbcType=NUMERIC},
+        #{cachedAt,jdbcType=VARCHAR})
+    </insert>
+    <update id="update">UPDATE slm_content SET source_type = #{sourceType,jdbcType=VARCHAR},
+        external_id = #{externalId,jdbcType=VARCHAR},
+        master_id = #{masterId,jdbcType=VARCHAR},
+        name = #{name,jdbcType=VARCHAR},
+        category = #{category,jdbcType=VARCHAR},
+        department = #{department,jdbcType=VARCHAR},
+        promulgation_no = #{promulgationNo,jdbcType=VARCHAR},
+        promulgation_date = #{promulgationDate,jdbcType=VARCHAR},
+        enforcement_date = #{enforcementDate,jdbcType=VARCHAR},
+        detail_link = #{detailLink,jdbcType=VARCHAR},
+        content = #{content,jdbcType=CLOB},
+        article_content_len = #{articleContentLen,jdbcType=NUMERIC},
+        cached_at = #{cachedAt,jdbcType=VARCHAR} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_content WHERE id = #{id}</delete>
+    <select id="selectIdentity" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_content WHERE source_type=#{source} AND external_id=#{external}
+    </select>
+    <select id="search" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_content
+ WHERE (INSTR(name,#{query}) &gt; 0 OR INSTR(content,#{query}) &gt; 0)
+        <if test="source != null and source != 'all'">AND source_type=#{source}</if>
+        ORDER BY name,id FETCH FIRST #{limit} ROWS ONLY
+    </select>
+    <select id="count" resultType="long">SELECT COUNT(*) FROM slm_content</select>
+    <select id="lastCachedAt" resultType="string">SELECT MAX(cached_at) FROM slm_content</select>
+    <select id="selectMatchingLawIds" resultType="long">SELECT l.id FROM slm_law l WHERE l.is_active=1 AND (
+      INSTR(l.name,#{query}) &gt; 0 OR EXISTS (
+        SELECT 1 FROM slm_content c WHERE c.source_type=l.source_type AND c.external_id=l.external_id
+          AND (INSTR(c.name,#{query}) &gt; 0 OR INSTR(c.content,#{query}) &gt; 0)
+      )
+    )</select>
+</mapper>

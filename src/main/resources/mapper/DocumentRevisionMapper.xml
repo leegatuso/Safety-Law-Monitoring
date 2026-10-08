@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.DocumentRevisionMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.DocumentRevision">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="document_id" property="documentId" javaType="java.lang.Long"/>
+        <result column="title" property="title" javaType="java.lang.String"/>
+        <result column="doc_type" property="docType" javaType="java.lang.String"/>
+        <result column="doc_number" property="docNumber" javaType="java.lang.String"/>
+        <result column="revision_no" property="revisionNo" javaType="java.lang.String"/>
+        <result column="revision_date" property="revisionDate" javaType="java.lang.String"/>
+        <result column="owner" property="owner" javaType="java.lang.String"/>
+        <result column="file_link" property="fileLink" javaType="java.lang.String"/>
+        <result column="note" property="note" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result column="tags" property="tags" javaType="java.lang.String"/>
+        <result column="change_reason" property="changeReason" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result column="changed_by" property="changedBy" javaType="java.lang.String"/>
+        <result column="changed_at" property="changedAt" javaType="java.lang.String"/>
+        <result column="mapped_law_ids" property="mappedLawIds" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+    </resultMap>
+    <sql id="columns">id, document_id, title, doc_type, doc_number, revision_no, revision_date, owner, file_link, note, tags, change_reason, changed_by, changed_at, mapped_law_ids</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_document_revision WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_document_revision ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_document_revision (id,
+        document_id,
+        title,
+        doc_type,
+        doc_number,
+        revision_no,
+        revision_date,
+        owner,
+        file_link,
+        note,
+        tags,
+        change_reason,
+        changed_by,
+        changed_at,
+        mapped_law_ids) VALUES (#{id,jdbcType=NUMERIC},
+        #{documentId,jdbcType=NUMERIC},
+        #{title,jdbcType=VARCHAR},
+        #{docType,jdbcType=VARCHAR},
+        #{docNumber,jdbcType=VARCHAR},
+        #{revisionNo,jdbcType=VARCHAR},
+        #{revisionDate,jdbcType=VARCHAR},
+        #{owner,jdbcType=VARCHAR},
+        #{fileLink,jdbcType=VARCHAR},
+        #{note,jdbcType=CLOB},
+        #{tags,jdbcType=VARCHAR},
+        #{changeReason,jdbcType=CLOB},
+        #{changedBy,jdbcType=VARCHAR},
+        #{changedAt,jdbcType=VARCHAR},
+        #{mappedLawIds,jdbcType=CLOB})
+    </insert>
+    <update id="update">UPDATE slm_document_revision SET document_id = #{documentId,jdbcType=NUMERIC},
+        title = #{title,jdbcType=VARCHAR},
+        doc_type = #{docType,jdbcType=VARCHAR},
+        doc_number = #{docNumber,jdbcType=VARCHAR},
+        revision_no = #{revisionNo,jdbcType=VARCHAR},
+        revision_date = #{revisionDate,jdbcType=VARCHAR},
+        owner = #{owner,jdbcType=VARCHAR},
+        file_link = #{fileLink,jdbcType=VARCHAR},
+        note = #{note,jdbcType=CLOB},
+        tags = #{tags,jdbcType=VARCHAR},
+        change_reason = #{changeReason,jdbcType=CLOB},
+        changed_by = #{changedBy,jdbcType=VARCHAR},
+        changed_at = #{changedAt,jdbcType=VARCHAR},
+        mapped_law_ids = #{mappedLawIds,jdbcType=CLOB} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_document_revision WHERE id = #{id}</delete>
+    <select id="selectHistory" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_document_revision
+        <where>
+            <if test="documentId != null">document_id=#{documentId}</if>
+            <if test="query != null and query != ''">AND INSTR(title,#{query}) &gt; 0</if>
+        </where>
+        ORDER BY changed_at DESC,id DESC FETCH FIRST #{limit} ROWS ONLY
+    </select>
+</mapper>

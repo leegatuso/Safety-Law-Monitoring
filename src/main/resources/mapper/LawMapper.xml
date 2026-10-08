@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.LawMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.Law">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="source_type" property="sourceType" javaType="java.lang.String"/>
+        <result column="external_id" property="externalId" javaType="java.lang.String"/>
+        <result column="master_id" property="masterId" javaType="java.lang.String"/>
+        <result column="name" property="name" javaType="java.lang.String"/>
+        <result column="category" property="category" javaType="java.lang.String"/>
+        <result column="department" property="department" javaType="java.lang.String"/>
+        <result column="current_promulgation_no" property="currentPromulgationNo" javaType="java.lang.String"/>
+        <result column="current_promulgation_date" property="currentPromulgationDate" javaType="java.lang.String"/>
+        <result column="current_enforcement_date" property="currentEnforcementDate" javaType="java.lang.String"/>
+        <result column="detail_link" property="detailLink" javaType="java.lang.String"/>
+        <result column="is_active" property="isActive" javaType="java.lang.Boolean"/>
+        <result column="last_synced_at" property="lastSyncedAt" javaType="java.lang.String"/>
+        <result column="created_at" property="createdAt" javaType="java.lang.String"/>
+        <result column="updated_at" property="updatedAt" javaType="java.lang.String"/>
+        <result column="mapped_document_count" property="mappedDocumentCount"/>
+        <result column="unreviewed_revision_count" property="unreviewedRevisionCount"/>
+    </resultMap>
+    <sql id="columns">id,
+        source_type,
+        external_id,
+        master_id,
+        name,
+        category,
+        department,
+        current_promulgation_no,
+        current_promulgation_date,
+        current_enforcement_date,
+        detail_link,
+        is_active,
+        last_synced_at,
+        created_at,
+        updated_at</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_law WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_law ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_law (id,
+        source_type,
+        external_id,
+        master_id,
+        name,
+        category,
+        department,
+        current_promulgation_no,
+        current_promulgation_date,
+        current_enforcement_date,
+        detail_link,
+        is_active,
+        last_synced_at,
+        created_at,
+        updated_at) VALUES (#{id,jdbcType=NUMERIC},
+        #{sourceType,jdbcType=VARCHAR},
+        #{externalId,jdbcType=VARCHAR},
+        #{masterId,jdbcType=VARCHAR},
+        #{name,jdbcType=VARCHAR},
+        #{category,jdbcType=VARCHAR},
+        #{department,jdbcType=VARCHAR},
+        #{currentPromulgationNo,jdbcType=VARCHAR},
+        #{currentPromulgationDate,jdbcType=VARCHAR},
+        #{currentEnforcementDate,jdbcType=VARCHAR},
+        #{detailLink,jdbcType=VARCHAR},
+        #{isActive,jdbcType=NUMERIC},
+        #{lastSyncedAt,jdbcType=VARCHAR},
+        #{createdAt,jdbcType=VARCHAR},
+        #{updatedAt,jdbcType=VARCHAR})
+    </insert>
+    <update id="update">UPDATE slm_law SET source_type = #{sourceType,jdbcType=VARCHAR},
+        external_id = #{externalId,jdbcType=VARCHAR},
+        master_id = #{masterId,jdbcType=VARCHAR},
+        name = #{name,jdbcType=VARCHAR},
+        category = #{category,jdbcType=VARCHAR},
+        department = #{department,jdbcType=VARCHAR},
+        current_promulgation_no = #{currentPromulgationNo,jdbcType=VARCHAR},
+        current_promulgation_date = #{currentPromulgationDate,jdbcType=VARCHAR},
+        current_enforcement_date = #{currentEnforcementDate,jdbcType=VARCHAR},
+        detail_link = #{detailLink,jdbcType=VARCHAR},
+        is_active = #{isActive,jdbcType=NUMERIC},
+        last_synced_at = #{lastSyncedAt,jdbcType=VARCHAR},
+        updated_at = #{updatedAt,jdbcType=VARCHAR} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_law WHERE id = #{id}</delete>
+    <select id="selectList" resultMap="row">
+        SELECT l.*,
+ (SELECT COUNT(*) FROM slm_mapping m WHERE m.tracked_law_id=l.id) mapped_document_count,
+ (SELECT COUNT(*) FROM slm_revision r WHERE r.tracked_law_id=l.id AND r.review_status='미검토') unreviewed_revision_count
+ FROM slm_law l
+        <where>
+            <if test="active">is_active=1</if>
+            <if test="source != null and source != ''">AND source_type=#{source}</if>
+        </where>
+        ORDER BY name,id
+    </select>
+    <select id="selectIdentity" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_law WHERE source_type=#{source} AND (external_id=#{external}
+        <if test="master != null and master != ''">OR master_id=#{master}</if>
+        ) ORDER BY id FETCH FIRST 1 ROWS ONLY
+    </select>
+    <update id="deactivate">UPDATE slm_law SET is_active=0 WHERE id=#{id}</update>
+</mapper>

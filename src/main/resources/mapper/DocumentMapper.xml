@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN'
+  'https://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace="com.company.safetylaw.mapper.DocumentMapper">
+    <resultMap id="row" type="com.company.safetylaw.domain.CompanyDocument">
+        <id column="id" property="id" javaType="java.lang.Long"/>
+        <result column="doc_type" property="docType" javaType="java.lang.String"/>
+        <result column="doc_number" property="docNumber" javaType="java.lang.String"/>
+        <result column="title" property="title" javaType="java.lang.String"/>
+        <result column="revision_no" property="revisionNo" javaType="java.lang.String"/>
+        <result column="revision_date" property="revisionDate" javaType="java.lang.String"/>
+        <result column="owner" property="owner" javaType="java.lang.String"/>
+        <result column="file_link" property="fileLink" javaType="java.lang.String"/>
+        <result column="note" property="note" javaType="java.lang.String" jdbcType="CLOB" typeHandler="org.apache.ibatis.type.ClobTypeHandler"/>
+        <result column="tags" property="tags" javaType="java.lang.String"/>
+        <result column="created_at" property="createdAt" javaType="java.lang.String"/>
+        <result column="updated_at" property="updatedAt" javaType="java.lang.String"/>
+    </resultMap>
+    <sql id="columns">id, doc_type, doc_number, title, revision_no, revision_date, owner, file_link, note, tags, created_at, updated_at</sql>
+    <select id="selectById" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_document WHERE id = #{id}
+    </select>
+    <select id="selectAll" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_document ORDER BY id
+    </select>
+    <insert id="insert">
+        <selectKey keyProperty="id" resultType="long" order="BEFORE">SELECT slm_seq.NEXTVAL FROM dual</selectKey>
+        INSERT INTO slm_document (id,
+        doc_type,
+        doc_number,
+        title,
+        revision_no,
+        revision_date,
+        owner,
+        file_link,
+        note,
+        tags,
+        created_at,
+        updated_at) VALUES (#{id,jdbcType=NUMERIC},
+        #{docType,jdbcType=VARCHAR},
+        #{docNumber,jdbcType=VARCHAR},
+        #{title,jdbcType=VARCHAR},
+        #{revisionNo,jdbcType=VARCHAR},
+        #{revisionDate,jdbcType=VARCHAR},
+        #{owner,jdbcType=VARCHAR},
+        #{fileLink,jdbcType=VARCHAR},
+        #{note,jdbcType=CLOB},
+        #{tags,jdbcType=VARCHAR},
+        #{createdAt,jdbcType=VARCHAR},
+        #{updatedAt,jdbcType=VARCHAR})
+    </insert>
+    <update id="update">UPDATE slm_document SET doc_type = #{docType,jdbcType=VARCHAR},
+        doc_number = #{docNumber,jdbcType=VARCHAR},
+        title = #{title,jdbcType=VARCHAR},
+        revision_no = #{revisionNo,jdbcType=VARCHAR},
+        revision_date = #{revisionDate,jdbcType=VARCHAR},
+        owner = #{owner,jdbcType=VARCHAR},
+        file_link = #{fileLink,jdbcType=VARCHAR},
+        note = #{note,jdbcType=CLOB},
+        tags = #{tags,jdbcType=VARCHAR},
+        updated_at = #{updatedAt,jdbcType=VARCHAR} WHERE id = #{id,jdbcType=NUMERIC}</update>
+    <delete id="deleteById">DELETE FROM slm_document WHERE id = #{id}</delete>
+    <select id="selectList" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_document
+        <where>
+            <if test="type != null and type != ''">doc_type=#{type}</if>
+        </where>
+        ORDER BY title,id
+    </select>
+    <select id="selectForUpdate" resultMap="row">
+        SELECT
+        <include refid="columns"/>
+        FROM slm_document WHERE id=#{id} FOR UPDATE
+    </select>
+</mapper>
