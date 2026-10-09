@@ -5,6 +5,11 @@
 MyBatis 3.0.5, Oracle JDBC를 사용합니다. 화면은 **Thymeleaf + HTML/CSS/JavaScript**이며
 React, Vite, Node 빌드 과정이 없습니다.
 
+## 상세 문서
+
+- [기능 설명](docs/FEATURES.md): 메뉴별 사용법, 동기화 조건, 설정, 다른 PC로 이전하는 방법
+- [구조 설명](docs/ARCHITECTURE.md): 프로젝트 구성, 클래스 역할, 테이블 관계, API, 저장·실행 흐름
+
 ## 실행
 
 JDK 17이 필요합니다. IntelliJ에서 이 폴더를 Gradle 프로젝트로 열고 Project SDK와 Gradle JVM을 17로 설정하세요.
