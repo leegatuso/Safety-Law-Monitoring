@@ -2,76 +2,47 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
 <body>
 <section th:fragment="content">
-<section id="tab-dashboard" class="tab-panel active">
-      <div class="page-heading">
-<h2>안전보건 업무 현황</h2>
-<p>법령의 변화를 확인하고, 검토가 필요한 사규를 관리하세요.</p>
-</div>
-      <div class="panel-box">
-        <form id="dashboardKeywordSearchForm" class="row" style="margin-bottom: 0;">
-          <input id="dashboardKeywordSearchInput" aria-label="법령·고시 본문 검색" type="text" placeholder="키워드나 문장으로 법령·고시 본문을 검색합니다 (예: 화기작업)" style="flex: 1;" />
-          <button type="submit" class="btn btn-primary">키워드 검색</button>
-        </form>
-      </div>
-
-      <div class="cards" id="summaryCards">
-<div class="card">
-<div class="value" th:text="${summary.tracked_law_count}">0</div>
-<div class="label">관리중인 법령</div>
-</div>
-<div class="card">
-<div class="value" th:text="${summary.unreviewed_count}">0</div>
-<div class="label">미검토 개정</div>
-</div>
-<div class="card">
-<div class="value" th:text="${summary.in_review_count}">0</div>
-<div class="label">검토중</div>
-</div>
-<div class="card">
-<div class="value" th:text="${summary.reflected_count}">0</div>
-<div class="label">반영완료</div>
-</div>
-<div class="card">
-<div class="value" th:text="${summary.document_count}">0</div>
-<div class="label">등록된 사규</div>
-</div>
-</div>
-
-      <div class="panel-box news-board">
-        <div class="news-board-header">
-          <h2>안전보건 이슈 · 중대재해 뉴스</h2>
-          <span id="newsDemoBadge" class="badge badge-warn" hidden title="실제 뉴스를 아직 못 가져와 예시 데이터로 채워져 있습니다">예시 데이터</span>
-          <button type="button" id="newsPauseBtn" class="btn" aria-pressed="false">스크롤 일시정지</button>
-          <button type="button" id="goToNewsPageBtn" class="btn" style="margin-left: auto;">전체보기 · 검색</button>
-        </div>
-        <p class="hint">고용노동부·안전보건공단 안전보건 이슈, 중대재해 관련 뉴스를 자동으로 모아 게시판처럼 스크롤로 보여줍니다. 항목을 클릭하면 원문으로 이동하고, 마우스를 올리면 스크롤이 멈춥니다.</p>
-        <div class="row news-board-filters" id="newsCategoryFilters">
-          <button type="button" class="news-filter-btn active" data-cat="">전체</button>
-          <button type="button" class="news-filter-btn" data-cat="moel">고용노동부</button>
-          <button type="button" class="news-filter-btn" data-cat="kosha">안전보건공단</button>
-          <button type="button" class="news-filter-btn" data-cat="accident">중대재해 뉴스</button>
-        </div>
-        <div id="newsBoard" class="news-board-viewport">
-          <div id="newsBoardTrack" class="news-board-track">
-</div>
-        </div>
-      </div>
-
-      <h2>법령 개정 리스트</h2>
-      <p class="hint">등록해둔 법령·고시에 실제 재개정이 감지되면 여기에 모두 표시됩니다. (핵심 기능)</p>
-      <div id="recentLawRevisions" class="table-wrap">
-</div>
-
-      <h2>신규 제정 고시 후보</h2>
-      <p class="hint">아직 등록하지 않은 고시·예규·훈령 중, 설정에서 지정한 소관부처+키워드에 모두 해당하는 것만 모아서 보여줍니다. "새로고침"을 누를 때마다 새로 찾습니다.</p>
-      <div id="newAdmrulCandidates" class="table-wrap">
-</div>
-
-      <h2>사내 절차서·지침서 개정 필요 사항</h2>
-      <p class="hint">근거 법령이 개정되어 아직 검토/반영되지 않은 절차서·지침서만 문서 기준으로 모아서 보여줍니다. (근거 법령 매핑 또는 키워드(해시태그) 자동 매칭 필요)</p>
-      <div id="recentDocImpacts" class="table-wrap">
-</div>
+  <header class="page-heading"><p class="eyebrow">업무 현황</p><h1>안전보건 업무 현황</h1><p>법령의 변화를 확인하고, 검토가 필요한 사규부터 관리하세요.</p></header>
+  <section id="tab-dashboard" class="tab-panel active">
+    <div class="cards" id="summaryCards" aria-label="업무 요약">
+      <a class="card attention" th:href="@{/revisions(status='미검토')}"><span class="label">미검토 개정</span><strong class="value" data-summary="unreviewed_count" th:text="${summary.unreviewed_count}">0</strong><span class="card-link">검토 시작 →</span></a>
+      <a class="card" th:href="@{/revisions(status='검토중')}"><span class="label">검토 중</span><strong class="value" data-summary="in_review_count" th:text="${summary.in_review_count}">0</strong><span class="card-link">진행 현황 →</span></a>
+      <a class="card" th:href="@{/revisions(status='반영완료')}"><span class="label">반영 완료</span><strong class="value" data-summary="reflected_count" th:text="${summary.reflected_count}">0</strong><span class="card-link">완료 이력 →</span></a>
+      <a class="card" th:href="@{/laws}"><span class="label">관리 법령</span><strong class="value" data-summary="tracked_law_count" th:text="${summary.tracked_law_count}">0</strong><span class="card-link">법령 목록 →</span></a>
+      <a class="card" th:href="@{/documents}"><span class="label">등록 사규</span><strong class="value" data-summary="document_count" th:text="${summary.document_count}">0</strong><span class="card-link">사규 목록 →</span></a>
+    </div>
+    <section class="panel-box">
+      <div class="section-heading"><div><h2>확인할 법령 개정</h2><p class="hint">미검토·검토 중인 개정 내역입니다. 내용을 확인한 뒤 상태를 변경하세요.</p></div><a th:href="@{/revisions}">개정 이력 전체보기 →</a></div>
+      <div id="recentLawRevisions" class="table-wrap" tabindex="0" role="region" aria-label="확인할 법령 개정"><div class="loading-state" role="status">개정 내역을 불러오는 중입니다.</div></div>
     </section>
+    <div class="dashboard-secondary">
+      <section class="panel-box">
+        <div class="section-heading"><div><h2>사규 영향 검토</h2><p class="hint">근거 법령의 변경이 연결된 사규입니다.</p></div><a th:href="@{/document-impacts}">검토 대상 →</a></div>
+        <div id="recentDocImpacts" class="table-wrap" tabindex="0" role="region" aria-label="검토할 사규"><div class="loading-state" role="status">사규 영향을 불러오는 중입니다.</div></div>
+      </section>
+      <section class="panel-box">
+        <div class="section-heading"><div><h2>새로 발견한 고시</h2><p class="hint">설정한 부처·키워드에 해당하는 신규 후보입니다.</p></div><a th:href="@{/settings#settings-candidates}">탐지 설정 →</a></div>
+        <div id="newAdmrulCandidates" class="table-wrap" tabindex="0" role="region" aria-label="새로 발견한 고시"><div class="loading-state" role="status">고시 후보를 불러오는 중입니다.</div></div>
+      </section>
+    </div>
+    <section class="panel-box search-toolbar" aria-label="법령 본문 바로 검색">
+      <form id="dashboardKeywordSearchForm" class="row">
+        <label class="field-label" for="dashboardKeywordSearchInput">법령 본문 바로 검색<input id="dashboardKeywordSearchInput" type="search" placeholder="키워드 또는 문장 입력 · 예: 화기작업" required /></label>
+        <button type="submit" class="btn btn-primary">본문 검색</button>
+      </form>
+    </section>
+    <section class="panel-box news-board">
+      <div class="news-board-header"><h2>안전보건 소식</h2><span id="newsDemoBadge" class="badge badge-warn" hidden>예시 데이터</span><button type="button" id="newsPauseBtn" class="btn btn-quiet" aria-pressed="false">자동 스크롤 켜기</button><button type="button" id="goToNewsPageBtn" class="btn">전체 기사 보기 →</button></div>
+      <p class="hint">기관별 주요 소식입니다. 기사를 누르면 새 창에서 원문을 확인할 수 있습니다.</p>
+      <div class="row news-board-filters" id="newsCategoryFilters" aria-label="뉴스 기관 필터">
+        <button type="button" class="news-filter-btn active" data-cat="" aria-pressed="true">전체</button>
+        <button type="button" class="news-filter-btn" data-cat="moel" aria-pressed="false">고용노동부</button>
+        <button type="button" class="news-filter-btn" data-cat="kosha" aria-pressed="false">안전보건공단</button>
+        <button type="button" class="news-filter-btn" data-cat="accident" aria-pressed="false">중대재해 뉴스</button>
+      </div>
+      <div id="newsBoard" class="news-board-viewport" tabindex="0" role="region" aria-label="안전보건 기사"><div id="newsBoardTrack" class="news-board-track"><div class="loading-state">기사를 불러오는 중입니다.</div></div></div>
+    </section>
+  </section>
 </section>
 </body>
 </html>

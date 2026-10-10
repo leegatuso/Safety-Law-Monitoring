@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>로그인 · 안전보건 정보 모니터링</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" />
+  <link rel="stylesheet" th:href="@{/css/style.css}" />
+  <link rel="stylesheet" th:href="@{/css/login.css}" />
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <aside class="login-intro">
+    <div class="login-brand">
+      <img th:src="@{/favicon.svg}" width="36" height="36" alt="" />
+      <span>안전보건 정보 모니터링</span>
+    </div>
+      <div class="login-intro-copy"><p class="login-eyebrow">SAFETY &amp; COMPLIANCE</p><h2>변화를 확인하고,<br>안전의 기준을<br>함께 관리합니다.</h2><p>법령 개정부터 사규 반영까지.<br>우리 조직의 안전보건 정보를 한곳에서.</p></div>
+      <ol class="login-workflow"><li><span>01</span>법령 변화 확인</li><li><span>02</span>사규 영향 검토</li><li><span>03</span>반영 이력 관리</li></ol>
+      <p class="login-intro-footer">안전보건 정보 모니터링</p>
+    </aside>
+    <div class="login-form-area">
+    <section class="login-panel" aria-labelledby="loginTitle">
+      <p class="login-eyebrow">업무 공간에 오신 것을 환영합니다</p>
+      <h1 id="loginTitle">사번으로 로그인</h1>
+      <p class="login-description">사번을 입력하고 업무를 시작하세요.</p>
+      <div class="login-message login-success" th:if="${loggedOut}" role="status">로그아웃되었습니다.</div>
+      <div class="login-message login-error" th:if="${loginError != null}"
+           th:text="${loginError}" role="alert">사번을 확인해 주세요.</div>
+      <form id="loginForm" th:if="${developmentLogin}" th:action="@{/login/employee}" method="post">
+        <label for="employeeCode">사번</label>
+        <input id="employeeCode" name="employeeCode" type="text" required maxlength="128"
+               autocomplete="username" spellcheck="false" autocapitalize="none"
+               placeholder="사번을 입력하세요" aria-describedby="loginHint" />
+        <p id="loginHint" class="login-hint">인사 정보에 등록된 사번을 입력해 주세요.</p>
+        <button type="submit" class="btn btn-primary login-submit">로그인</button>
+      </form>
+      <p class="login-message" th:unless="${developmentLogin}" role="status">
+        현재 사번 입력 로그인이 비활성화되어 있습니다. 접속 방법은 시스템 담당자에게 문의해 주세요.
+      </p>
+      <p class="login-local" th:if="${localPreview and developmentLogin}">
+        로컬 예시 계정 <strong>LOCAL001</strong>
+      </p>
+      <p class="login-footnote" th:if="${developmentLogin}">SSO 연동 전 임시 로그인입니다.</p>
+    </section>
+    <p class="login-footer">같은 정보를 보고, 변경 이력을 함께 관리합니다.</p>
+    </div>
+  </main>
+  <script th:src="@{/js/login.js}" defer></script>
+</body>
+</html>

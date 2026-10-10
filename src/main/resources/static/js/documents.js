@@ -124,7 +124,7 @@ function renderDocumentsTable() {
   const el = document.getElementById("documentsTable");
   selectedDocumentIds = new Set();
   if (!state.documents.length) {
-    el.innerHTML = `<div class="empty">등록된 사규가 없습니다.</div>`;
+    el.innerHTML = `<div class="empty"><strong>아직 등록된 사규가 없습니다</strong>상단의 ‘사규 추가’에서 절차서·지침서와 근거 법령을 등록하세요.</div>`;
     updateDocumentsBulkToolbar();
     return;
   }
@@ -146,7 +146,7 @@ function renderDocumentsTable() {
       <tbody>
         ${documents.map((d) => `
           <tr>
-            <td><input type="checkbox" class="document-row-checkbox" data-document-id="${d.id}"></td>
+            <td><input type="checkbox" aria-label="${escapeHtml(d.title)} 선택" class="document-row-checkbox" data-document-id="${d.id}"></td>
             <td>${escapeHtml(d.doc_type)}</td>
             <td>${escapeHtml(d.doc_number || "-")}</td>
             <td>${escapeHtml(d.title)}</td>

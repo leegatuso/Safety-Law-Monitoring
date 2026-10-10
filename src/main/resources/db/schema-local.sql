@@ -154,3 +154,12 @@ CREATE TABLE IF NOT EXISTS slm_document_revision (
  CONSTRAINT slm_doc_revision_doc_fk FOREIGN KEY (document_id) REFERENCES slm_document(id) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS slm_doc_revision_doc_idx ON slm_document_revision(document_id,changed_at);
+
+-- H2 전용 예시 인사 뷰. Oracle에서는 기존 인사 뷰를 조회하며 생성/변경하지 않는다.
+CREATE OR REPLACE VIEW IS_USER_INFO_SSO_V AS
+SELECT CAST('LOCAL001' AS VARCHAR2(64)) AS EMPCD,
+       CAST('로컬 사용자' AS VARCHAR2(100)) AS HNAME,
+       CAST('개발 환경' AS VARCHAR2(100)) AS DEPTCDNM,
+       CAST(NULL AS VARCHAR2(40)) AS HANDPHONE,
+       CAST('local@example.invalid' AS VARCHAR2(200)) AS EMAIL
+FROM dual;

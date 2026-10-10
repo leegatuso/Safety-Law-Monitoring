@@ -9,6 +9,7 @@ React, Vite, Node 빌드 과정이 없습니다.
 
 - [기능 설명](docs/FEATURES.md): 메뉴별 사용법, 동기화 조건, 설정, 다른 PC로 이전하는 방법
 - [구조 설명](docs/ARCHITECTURE.md): 프로젝트 구성, 클래스 역할, 테이블 관계, API, 저장·실행 흐름
+- [UI/UX 구성](docs/UI-UX.md): 메뉴 구조, 화면별 작업 흐름, 공통 디자인·접근성 기준
 
 ## 실행
 
@@ -20,8 +21,9 @@ JDK 17이 필요합니다. IntelliJ에서 이 폴더를 Gradle 프로젝트로 �
 .\gradlew.bat bootRun --args="--spring.profiles.active=local --server.port=8080"
 ```
 
-브라우저에서 http://127.0.0.1:8080 에 접속합니다. 로컬 검증 데이터는 `data/local.mv.db`,
-첨부 PDF는 `data/kosha/`에 저장됩니다. 로컬 프로필의 법령은 예시이며 최신 법령 정보가 아닙니다.
+브라우저에서 http://127.0.0.1:8080 에 접속한 뒤 예시 사번 `LOCAL001`로 로그인합니다. 로컬 검증 데이터는 `data/local.mv.db`,
+첨부 PDF는 `data/kosha/`에 저장됩니다. 공통 설정에 등록된 API 인증키로 실제 법령을 검색·동기화합니다.
+기존 로컬 DB에 예시 법령이 남아 있다면 실제 API 검색 결과를 기준으로 추적 목록을 정리하세요.
 로컬에서는 외부 뉴스 수집을 건너뜁니다. 화면의 데이터 입력과 검토 상태는 재시작해도 유지됩니다.
 
 ## Oracle 운영 설정
@@ -29,31 +31,57 @@ JDK 17이 필요합니다. IntelliJ에서 이 폴더를 Gradle 프로젝트로 �
 1. 별도의 Oracle 사용자/스키마를 준비합니다.
 2. `src/main/resources/db/schema-oracle.sql`을 해당 스키마에서 **최초 1회** 실행합니다.
    기존 cpboard 테이블과 겹치지 않도록 `SLM_` 접두사를 사용합니다.
-3. 아래 환경변수를 설정하고 Oracle 모드로 실행합니다.
+3. DB 접속 계정이 기존 인사 뷰 `IS_USER_INFO_SSO_V`를 조회할 수 있도록 권한을 부여합니다.
+   다른 스키마의 뷰라면 접속 계정에 동명 synonym도 준비합니다. 인사 뷰 자체는 이 프로젝트에서 생성·수정하지 않습니다.
+4. 아래 환경변수를 설정하고 Oracle 모드로 실행합니다.
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Java\jdk-17.0.18'
 $env:SAFETY_LAW_DB_URL='jdbc:oracle:thin:@DB_HOST:1521/SERVICE_NAME'
 $env:SAFETY_LAW_DB_USERNAME='safety_law'
 $env:SAFETY_LAW_DB_PASSWORD='실제 DB 비밀번호'
-$env:LAW_API_OC='국가법령정보센터 인증키'
-$env:KOSHA_GUIDE_API_KEY='공공데이터포털 인증키'
 .\gradlew.bat bootRun
 ```
 
-인증키는 화면의 설정에서도 변경할 수 있습니다. DB 비밀번호는 소스에 저장하지 않습니다.
+법령 OC와 KOSHA 인증키·조회 주소는 사용자 요청에 따라 `src/main/resources/application.yaml`에 포함했습니다.
+다른 PC에서 clone하면 같은 API 기본 설정을 사용합니다. 변경하려면 `LAW_API_OC`, `KOSHA_GUIDE_API_KEY`,
+`KOSHA_GUIDE_API_URL` 환경변수 또는 화면의 환경 설정을 사용하세요. DB에 저장된 설정값이 가장 우선합니다.
+DB 비밀번호는 소스에 저장하지 않습니다.
 기본 프로필은 Oracle이며 스키마를 자동 생성/삭제하지 않습니다. 기존 Python SQLite 데이터는
 자동으로 이관되지 않습니다. 실제 기존 DB와 첨부파일을 확보한 뒤 백업·이관·건수 대조가 필요합니다.
 
-사내 다른 PC에서 접속할 때는 `SERVER_ADDRESS=0.0.0.0`과 `DASHBOARD_USERNAME`,
-`DASHBOARD_PASSWORD`를 함께 설정하세요. 외부 바인딩에서 로그인 정보가 없으면 기동을 차단합니다.
-운영 서버에서는 HTTPS 리버스 프록시 뒤에 배치하세요. 기본 localhost 실행은 로그인 없이 사용할 수 있고,
-모든 변경 요청에는 CSRF 토큰이 필요합니다.
+사내 다른 PC에서 접속할 때는 서버에 `SERVER_ADDRESS=0.0.0.0`을 설정하고 모두 같은 서버 주소로 접속합니다.
+운영 서버에서는 HTTPS 리버스 프록시와 `SESSION_COOKIE_SECURE=true`를 사용하세요.
+모든 업무 화면·API는 로그인해야 사용할 수 있고, 변경 요청에는 CSRF 토큰이 필요합니다.
+
+## 사번 로그인과 SSO 연결 준비
+
+`/`, `/index`, `/index.html`, `/login`에서 사번 입력 화면을 제공합니다.
+SSO 연동 전 임시 기능으로 비밀번호 없이 사번으로 사용자를 선택하므로, 기본 Oracle 프로필에서는 비활성화되어 있습니다.
+Oracle 인사 뷰로 임시 로그인하려면 IntelliJ의 **Active profiles**를 `dev-login`으로 설정하거나
+실행 환경변수 `DEV_LOGIN_ENABLED=true`를 지정하세요. Gradle 실행 예시는 다음과 같습니다.
+
+```powershell
+.\gradlew.bat bootRun --args="--spring.profiles.active=dev-login"
+```
+
+- 실제 사번을 입력하면 `IS_USER_INFO_SSO_V`의 `EMPCD`로 조회합니다.
+- `HNAME`(이름), `DEPTCDNM`(부서), `HANDPHONE`(휴대폰), `EMAIL`(이메일)을 세션 사용자 정보로 보관합니다.
+- 별도 사용자 등록 테이블은 만들지 않습니다. 인사 정보는 로그인할 때 다시 읽습니다.
+- 다른 메뉴 주소로 직접 접근해도 로그인 후 원래 화면으로 이동합니다. 처음 접속하면 대시보드로 이동합니다.
+- 세션은 30분 동안 요청이 없으면 만료되며, 상단에 이름·부서와 로그아웃 버튼이 표시됩니다.
+- `local` 프로필은 임시 로그인을 기본 활성화하고 H2 예시 인사 뷰의 `LOCAL001`을 사용합니다.
+- 실제 SSO는 아직 연결하지 않았습니다. 가이드 수령 후 검증된 `pid`를 사번 또는 이메일의 `@` 앞 ID로 조회하는 지점에 연결합니다.
+  현재 URL 파라미터·헤더의 `pid`로 로그인하는 경로는 없습니다.
+
+`DASHBOARD_USERNAME` / `DASHBOARD_PASSWORD` 기반 공통 로그인은 제거했습니다.
+SSO를 연결할 때는 임시 사번 로그인을 끄세요. 현재 로그인 사용자 모두 같은 업무 데이터와 메뉴를 사용하며,
+사용자별 권한이나 변경자 자동 기록은 별도 구현 대상입니다.
 
 ## Linux 배포
 
 ```bash
-# JDK 17, Oracle 접속 환경변수 및 로그인 환경변수 설정 후
+# JDK 17, Oracle 접속 환경변수 설정 후 (임시 사번 접속은 DEV_LOGIN_ENABLED=true)
 sh gradlew bootJar
 java -jar build/libs/safety-law-monitoring-0.1.0-SNAPSHOT.jar
 ```
@@ -85,10 +113,11 @@ Oracle 데이터와 PDF 폴더를 함께 백업하세요. 단일 서버 프로�
 src/main/java/com/company/safetylaw/
 ├── SafetyLawApplication.java   Spring Boot 실행 클래스
 ├── config/                     보안 및 애플리케이션 설정
+├── security/                   사번 인증과 세션 사용자
 ├── controller/                 화면 라우팅 및 REST API
 ├── service/                    법령·사규·개정·가이드·뉴스별 업무 처리
 ├── mapper/                     업무별 MyBatis 인터페이스
-├── domain/                     테이블별 JavaBean
+├── domain/                     테이블별 JavaBean 및 인사 뷰 조회 결과
 ├── dto/                        입력 검증 DTO와 조회 결과
 ├── scheduler/                  정기 동기화·캐시 작업 호출
 ├── client/                     외부 HTTP 및 법령 API 연동
@@ -97,8 +126,10 @@ src/main/java/com/company/safetylaw/
 src/main/resources/
 ├── application.yaml            공통·Oracle 실행 설정
 ├── application-local.yaml      로컬 H2 실행 설정
+├── application-dev-login.yaml  Oracle 임시 사번 로그인 설정
 ├── mapper/                     업무별 SQL XML
 ├── templates/
+│   ├── index.html              사번 입력 로그인 화면
 │   ├── fragments/layout.html   공통 헤더·메뉴·도움말
 │   └── pages/                  메뉴별 Thymeleaf 화면
 ├── static/

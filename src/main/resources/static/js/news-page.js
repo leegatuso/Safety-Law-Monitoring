@@ -131,7 +131,10 @@ export async function loadNewsPage() {
 export function initNewsPage() {
   document.querySelectorAll("#newsPageCategoryFilters .news-filter-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("#newsPageCategoryFilters .news-filter-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      document.querySelectorAll("#newsPageCategoryFilters .news-filter-btn").forEach((b) => {
+        b.classList.toggle("active", b === btn);
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
       newsPageState.category = btn.dataset.cat || "";
       loadNewsPage();
     });
@@ -176,7 +179,10 @@ export function initNewsPage() {
     document.getElementById("newsPageDateFrom").value = "";
     document.getElementById("newsPageDateTo").value = "";
     document.getElementById("newsPageArchivedOnly").checked = false;
-    document.querySelectorAll("#newsPageCategoryFilters .news-filter-btn").forEach((b) => b.classList.toggle("active", !b.dataset.cat));
+    document.querySelectorAll("#newsPageCategoryFilters .news-filter-btn").forEach((b) => {
+      b.classList.toggle("active", !b.dataset.cat);
+      b.setAttribute('aria-pressed', String(!b.dataset.cat));
+    });
     loadNewsPage();
   });
 }

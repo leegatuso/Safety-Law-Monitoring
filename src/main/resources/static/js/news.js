@@ -3,7 +3,7 @@
 import { api, escapeHtml } from "./core.js";
 import { activateTab } from "./tabs.js";
 
-const newsBoardState = { category: "", scrollTimer: null, paused: false, manuallyPaused: false };
+const newsBoardState = { category: "", scrollTimer: null, paused: false, manuallyPaused: true };
 
 function fmtNewsDate(iso) {
   if (!iso) return "";
@@ -97,12 +97,15 @@ function startNewsAutoScroll() {
 export function initNewsBoard() {
   document.getElementById('newsPauseBtn').addEventListener('click', (event) => {
     newsBoardState.manuallyPaused = !newsBoardState.manuallyPaused;
-    event.currentTarget.setAttribute('aria-pressed', String(newsBoardState.manuallyPaused));
-    event.currentTarget.textContent = newsBoardState.manuallyPaused ? '스크롤 재생' : '스크롤 일시정지';
+    event.currentTarget.setAttribute('aria-pressed', String(!newsBoardState.manuallyPaused));
+    event.currentTarget.textContent = newsBoardState.manuallyPaused ? '자동 스크롤 켜기' : '자동 스크롤 끄기';
   });
   document.querySelectorAll("#newsCategoryFilters .news-filter-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("#newsCategoryFilters .news-filter-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      document.querySelectorAll("#newsCategoryFilters .news-filter-btn").forEach((b) => {
+        b.classList.toggle("active", b === btn);
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
       newsBoardState.category = btn.dataset.cat || "";
       document.getElementById("newsBoard").scrollTop = 0;
       loadNewsBoard();

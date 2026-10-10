@@ -1,6 +1,20 @@
+# Shared API credentials approved for inclusion in this repository.
+# Environment variables override these defaults; saved DB settings take precedence.
+LAW_API_OC: 'LGW'
+KOSHA_GUIDE_API_KEY: '0f3ded8080fda03e3d5ec717c4838beeb2fc78432dbc26be0f1844dc004248b9'
+KOSHA_GUIDE_API_URL: 'https://apis.data.go.kr/B552468/koshaguide/getKoshaGuide'
+
 server:
   address: ${SERVER_ADDRESS:127.0.0.1}
   port: ${SERVER_PORT:8080}
+  servlet:
+    session:
+      timeout: 30m
+      tracking-modes: cookie
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}
 spring:
   application:
     name: safety-law-monitoring
@@ -28,7 +42,7 @@ management:
 app:
   demo: false
   files-dir: ${SAFETY_LAW_FILES_DIR:./data/kosha}
-  username: ${DASHBOARD_USERNAME:}
-  password: ${DASHBOARD_PASSWORD:}
+  auth:
+    development-login-enabled: ${DEV_LOGIN_ENABLED:false}
   sync-delay-ms: ${AUTO_SYNC_DELAY_MS:86400000}
   news-delay-ms: ${NEWS_FETCH_DELAY_MS:10800000}

@@ -10,8 +10,10 @@ import com.company.safetylaw.mapper.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,7 +50,10 @@ public class SyncService {
     public synchronized boolean syncOne(long id) {
         var law = found(laws.selectById(id));
         var latest = LawClient.match(law, client.search(law.getSourceType(), law.getName(), 1));
-        if (latest == null) throw new IllegalArgumentException("추적 중인 법령을 찾지 못했습니다.");
+        if (latest == null)
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "현재 API 검색 결과에 일치하는 법령이 없습니다. 법령명과 등록 정보를 확인하세요.");
         return Boolean.TRUE.equals(tx.execute(status -> applyLatest(id, latest)));
     }
 
@@ -103,22 +108,24 @@ public class SyncService {
         try {
             for (var law : laws.selectList(true, null)) {
                 checked++;
+                String stage = "법령 조회·저장";
                 try {
                     if (syncOne(law.getId())) changed++;
+                    stage = "본문 수집·저장";
                     contents.cache(LawSnapshot.from(found(laws.selectById(law.getId()))));
                 } catch (Exception ex) {
                     log.warn(
                             "Law sync failed for id={}: {}",
                             law.getId(),
                             ex.getClass().getSimpleName());
-                    errors.add(law.getName() + ": 조회 또는 저장 실패");
+                    errors.add(law.getName() + " · " + stage + ": " + failureReason(ex));
                 }
             }
             try {
                 added = scan();
             } catch (Exception ex) {
                 log.warn("Candidate scan failed: {}", ex.getClass().getSimpleName());
-                errors.add("신규 고시 탐색 실패");
+                errors.add("신규 고시 탐색: " + failureReason(ex));
             }
             return row(
                     "checked",
@@ -132,6 +139,14 @@ public class SyncService {
         } finally {
             running.set(false);
         }
+    }
+
+    private static String failureReason(Exception ex) {
+        // Only application-defined HTTP reasons are safe to show; SQL and URL errors may contain secrets.
+        if (ex instanceof ResponseStatusException response
+                && response.getReason() != null
+                && !response.getReason().isBlank()) return response.getReason();
+        return "처리 중 오류가 발생했습니다. 서버 로그를 확인하세요.";
     }
 
     public int scan() {

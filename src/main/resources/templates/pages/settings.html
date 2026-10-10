@@ -2,25 +2,26 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
 <body>
 <section th:fragment="content">
+<header class="page-heading"><p class="eyebrow">자료 · 운영</p><h1>환경 설정</h1><p>외부 서비스 연결과 자동 수집 기준을 관리합니다.</p></header>
+<nav class="section-nav" aria-label="설정 항목"><a href="#settings-start">기본 법령</a><a href="#settings-candidates">고시 탐지</a><a href="#settings-cache">본문 캐시</a><a href="#settings-full-cache">전체 자동 캐시</a><a href="#settings-news">뉴스 수집</a><a href="#settings-law-api">법령 API</a><a href="#settings-kosha-api">KOSHA API</a><a href="#settings-sync">자동 동기화</a></nav>
 <section id="tab-settings" class="tab-panel active">
-      <div class="panel-box">
+      <div class="panel-box settings-section" id="settings-start">
         <h2>플랜트건설업 기본 법령 세트</h2>
         <p class="hint">플랜트건설업에 저촉되는 안전보건 관련 법령·고시를 한 번에 검색해서 관리 목록에 추가합니다. 이미 관리 중인 항목은 건너뜁니다 · 다시 눌러도 안전합니다.</p>
         <div class="row">
           <button id="seedDefaultsBtn" class="btn btn-primary">기본 법령 세트 추가</button>
         </div>
-        <div id="seedResults" class="table-wrap">
-</div>
+        <div id="seedResults" class="table-wrap" tabindex="0" role="region" aria-label="환경 설정 목록"></div>
       </div>
 
-      <div class="panel-box">
+      <div class="panel-box settings-section" id="settings-candidates">
         <h2>신규 제정 고시 자동 탐지</h2>
-        <p class="hint">
+        <details class="usage-note"><summary>사용 안내</summary><p class="hint">
           고시는 기존 것이 "개정"되는 게 아니라 매년 새로 "제정"되는 경우가 많아, 등록해둔 항목만 추적해서는 놓칠 수 있습니다.
           <b>소관부처</b>가 아래 부처와 일치하면서, 이름에 <b>키워드</b> 중 하나라도 포함된 아직 등록 안 한 고시·예규·훈령을 찾아 대시보드에 후보로 보여줍니다 (부처 AND 키워드, 이중 필터).
-          "새로고침"을 누를 때마다, 그리고 <b>매일 새벽 1시</b>에도 자동으로 실행됩니다.
+          <b>법령 동기화</b>와 서버에 설정된 자동 동기화 주기에 실행됩니다.
           <b>기준일</b>을 설정하면 그 날짜 이후에 공포된 것만 후보로 보여줍니다 (다른 PC에 설치할 때, 과거 고시가 전부 "신규"로 쏟아지는 걸 막는 용도). 비워두면 전체 기간이 대상입니다.
-        </p>
+        </p></details>
         <form id="newAdmrulForm" class="grid-form">
           <label>소관부처 <input id="newAdmrulDepartment" type="text" placeholder="고용노동부" />
 </label>
@@ -43,24 +44,23 @@
         </div>
         <div id="dismissedAdmrulControls" hidden>
           <div class="row">
-            <input id="dismissedAdmrulSearchInput" type="text" placeholder="이름으로 빠르게 찾기" />
+            <label class="field-label" for="dismissedAdmrulSearchInput">후보 이름 검색<input id="dismissedAdmrulSearchInput" type="text" placeholder="이름으로 빠르게 찾기" /></label>
           </div>
           <div class="row">
             <span id="dismissedAdmrulSelectedCount" class="hint">0건 선택됨</span>
             <button id="dismissedAdmrulBulkRestoreBtn" class="btn" disabled>선택 항목 일괄 복원</button>
           </div>
         </div>
-        <div id="dismissedAdmrulTable" class="table-wrap" hidden>
-</div>
+        <div id="dismissedAdmrulTable" class="table-wrap" tabindex="0" role="region" aria-label="환경 설정 목록" hidden></div>
       </div>
 
-      <div class="panel-box">
+      <div class="panel-box settings-section" id="settings-cache">
         <h2>법령 본문 캐시</h2>
-        <p class="hint">
+        <details class="usage-note"><summary>사용 안내</summary><p class="hint">
           국가법령정보센터 API는 법령명 검색만 지원하고 전체 법령 대상 본문검색은 제공하지 않습니다.
           그래서 <b>본문검색</b>과 사규 <b>키워드(해시태그) 자동 매칭</b>은 여기서 미리 받아둔 본문 캐시를 대상으로 동작합니다.
           추적 중인 법령·고시의 본문은 동기화할 때마다 자동으로 갱신되고, 아직 등록하지 않은 법령까지 포함한 더 넓은 범위는 아래 버튼으로 직접 새로고침해야 합니다(위 "신규 제정 고시" 키워드/부처 설정을 그대로 사용합니다).
-        </p>
+        </p></details>
         <div class="row">
           <button id="refreshContentCacheBtn" class="btn btn-primary">본문 캐시 새로고침</button>
           <span id="contentCacheStatus" class="hint">
@@ -68,14 +68,14 @@
         </div>
       </div>
 
-      <div class="panel-box">
+      <div class="panel-box settings-section" id="settings-full-cache">
         <h2>전체 법령 자동 캐시</h2>
-        <p class="hint">
+        <details class="usage-note"><summary>사용 안내</summary><p class="hint">
           위 "본문 캐시 새로고침"은 "신규 제정 고시" 키워드에 걸리는 법령·고시만 대상이라, 안전보건과 직접 관련 없어 보이는 법령(예: 도로교통법의 "과속")은 키워드 검색에 잡히지 않습니다.
           이 기능을 켜면 <b>매일 새벽 1시</b>에 법령(법률/시행령/시행규칙)과 행정규칙(고시/예규/훈령) <b>전체(모든 부처)</b>를 목록 조회 API로 끝까지 훑어 본문을 캐시합니다 - 아직 등록/키워드 매칭 안 된 것도 모두 포함됩니다.
           공포번호가 바뀌지 않은 항목은 상세조회를 건너뛰어서, <b>처음 한 번(수만 건 대상이라 몇 시간 이상 걸릴 수 있음)만 오래 걸리고 그다음부터는 실제로 개정·신규 제정된 것만 다시 받아와 훨씬 빨라집니다.</b>
           (오전 1시에 서버가 꺼져 있었다면 "지금 바로 시작"으로 실행할 수 있습니다.)
-        </p>
+        </p></details>
         <div class="row">
           <label>
 <input type="checkbox" id="fullLawCacheEnabled" /> 매일 자동 실행 (서버가 실행 중인 경우, 새벽 1시)</label>
@@ -88,14 +88,14 @@
         </div>
       </div>
 
-      <div class="panel-box">
+      <div class="panel-box settings-section" id="settings-news">
         <h2>안전보건 뉴스 게시판</h2>
-        <p class="hint">
-          대시보드 상단에 자동 스크롤로 표시되는 고용노동부·안전보건공단 안전보건 이슈, 중대재해 뉴스의 출처(RSS/Atom 피드 주소)를 설정합니다.
+        <details class="usage-note"><summary>사용 안내</summary><p class="hint">
+          대시보드에 표시되는 고용노동부·안전보건공단 안전보건 이슈, 중대재해 뉴스의 출처(RSS/Atom 피드 주소)를 설정합니다.
           기본값은 구글 뉴스 검색 RSS(<code>news.google.com/rss/search</code>)로 채워져 있어 별도 설정 없이도 동작하지만,
           고용노동부·안전보건공단의 공식 RSS 주소를 알고 있다면 그 주소로 바꿔도 됩니다(표준 RSS 2.0 또는 Atom 형식이면 어떤 주소든 동작합니다).
           피드 수집에 실패하면 기존 저장 뉴스는 유지되고, 수동 새로고침 결과에 오류가 표시됩니다. 로컬 검증 모드에서는 외부 뉴스 수집을 건너뜁니다.
-        </p>
+        </p></details>
         <form id="newsSettingsForm" class="grid-form">
           <label class="full">
 <input type="checkbox" id="newsTickerEnabled" /> 대시보드에 뉴스 게시판 표시</label>
@@ -120,20 +120,20 @@
 </p>
       </div>
 
-      <div class="panel-box">
+      <div class="panel-box settings-section" id="settings-law-api">
         <h2>국가법령정보센터 Open API</h2>
         <p class="hint">
           실제 법령을 조회하려면 발급받은 국가법령정보센터 OC 키를 입력하세요. 설정한 키는 서버에 저장됩니다.
         </p>
         <div class="row">
-          <input id="settingOc" type="text" placeholder="OC 키" />
+          <label class="field-label" for="settingOc">OC 인증키<input id="settingOc" type="text" placeholder="OC 키" /></label>
           <button id="saveOcBtn" class="btn btn-primary">저장</button>
         </div>
         <p id="ocStatus" class="hint">
 </p>
       </div>
 
-      <div class="panel-box">
+      <div class="panel-box settings-section" id="settings-kosha-api">
         <h2>KOSHA 가이드 Open API (기술지원규정 조회서비스)</h2>
         <p class="hint">
           KOSHA 가이드 목록을 조회하려면 발급받은 공공데이터포털 인증키를 입력하세요.
@@ -153,7 +153,7 @@
 </p>
       </div>
 
-      <div class="panel-box">
+      <div class="panel-box settings-section" id="settings-sync">
         <h2>자동 동기화</h2>
         <p class="hint" id="autoSyncHint">
 </p>

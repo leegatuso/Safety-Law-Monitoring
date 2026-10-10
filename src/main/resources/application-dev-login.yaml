@@ -1,0 +1,4 @@
+# SSO 연결 전, Oracle 인사 뷰에 등록된 사번으로 접속하는 개발용 프로필.
+app:
+  auth:
+    development-login-enabled: ${DEV_LOGIN_ENABLED:true}

@@ -11,12 +11,15 @@ import { loadTab } from "./tabs.js";
 export async function runSync(btn) {
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "새로고침 중...";
+    btn.textContent = "동기화 중…";
+    btn.setAttribute('aria-busy', 'true');
   }
   try {
     const result = await api("/api/sync", { method: "POST" });
     let msg = `동기화 완료: ${result.checked}건 확인, 신규 개정 ${result.new_revisions}건, 신규 고시 후보 ${result.new_admrul_candidates}건`;
-    if (result.errors.length) msg += ` (오류 ${result.errors.length}건)`;
+    if (result.errors.length) {
+      msg += ` (오류 ${result.errors.length}건)\n\n${result.errors.join("\n\n")}`;
+    }
     toast(msg, result.errors.length > 0);
     const activeTab = document.body.dataset.page;
     loadTab(activeTab);
@@ -25,7 +28,8 @@ export async function runSync(btn) {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = "지금 동기화";
+      btn.textContent = "법령 동기화";
+      btn.removeAttribute('aria-busy');
     }
   }
 }

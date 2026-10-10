@@ -111,19 +111,18 @@ export async function loadDashboard() {
   if (!document.getElementById("summaryCards")) return;
   try {
     const s = await api("/api/dashboard/summary");
-    document.getElementById("summaryCards").innerHTML = `
-      <div class="card"><div class="value">${s.tracked_law_count}</div><div class="label">관리중인 법령</div></div>
-      <div class="card"><div class="value">${s.unreviewed_count}</div><div class="label">미검토 개정</div></div>
-      <div class="card"><div class="value">${s.in_review_count}</div><div class="label">검토중</div></div>
-      <div class="card"><div class="value">${s.reflected_count}</div><div class="label">반영완료</div></div>
-      <div class="card"><div class="value">${s.document_count}</div><div class="label">등록된 사규</div></div>
-    `;
+    document.querySelectorAll('[data-summary]').forEach(el => {
+      el.textContent = Number(s[el.dataset.summary] || 0).toLocaleString('ko-KR');
+    });
     document.getElementById("lastSyncInfo").textContent = `마지막 동기화: ${fmtDateTime(s.last_sync_at)}`;
-    renderDashboardRevisionList("recentLawRevisions", s.recent_revisions, `아직 감지된 개정이 없습니다. "새로고침"을 눌러 확인해보세요.`);
-    renderNewAdmrulCandidates("newAdmrulCandidates", s.new_admrul_candidates, `현재 발견된 신규 제정 고시 후보가 없습니다.`);
-    renderDashboardDocumentImpacts("recentDocImpacts", s.recent_document_impacts, `현재 개정 검토가 필요한 문서가 없습니다.`);
+    renderDashboardRevisionList("recentLawRevisions", s.recent_revisions, `<strong>확인할 개정이 없습니다</strong>법령 동기화 후 새로운 변경 사항이 표시됩니다.`);
+    renderNewAdmrulCandidates("newAdmrulCandidates", s.new_admrul_candidates, `<strong>새로운 고시 후보가 없습니다</strong>동기화 시 설정한 부처와 키워드로 다시 찾습니다.`);
+    renderDashboardDocumentImpacts("recentDocImpacts", s.recent_document_impacts, `<strong>현재 검토할 사규가 없습니다</strong>사규에 근거 법령을 연결하면 영향을 함께 확인할 수 있습니다.<br><a href="/documents">사규 관리로 이동 →</a>`);
     updateAlarmBell(s);
   } catch (e) {
+    ['recentLawRevisions', 'newAdmrulCandidates', 'recentDocImpacts'].forEach(id => {
+      document.getElementById(id).innerHTML = `<div class="empty"><strong>현황을 불러오지 못했습니다</strong>${escapeHtml(e.message)}<br><a href="/dashboard">다시 불러오기</a></div>`;
+    });
     toast(`대시보드 로드 실패: ${e.message}`, true);
   }
   loadNewsBoard();

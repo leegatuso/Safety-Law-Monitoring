@@ -112,7 +112,7 @@ function renderKoshaGuidesTable() {
       <tbody>
         ${filtered.map((g) => `
           <tr>
-            <td><input type="checkbox" class="kosha-guide-row-checkbox" data-guide-id="${g.id}" ${selectedKoshaGuideIds.has(g.id) ? "checked" : ""}></td>
+            <td><input type="checkbox" aria-label="${escapeHtml(g.title)} 선택" class="kosha-guide-row-checkbox" data-guide-id="${g.id}" ${selectedKoshaGuideIds.has(g.id) ? "checked" : ""}></td>
             <td>${escapeHtml(g.code || "-")}</td>
             <td>${escapeHtml(g.field || "-")}</td>
             <td>${titleCell(g)}</td>

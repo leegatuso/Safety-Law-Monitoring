@@ -2,33 +2,33 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
 <body>
 <section th:fragment="content">
+<header class="page-heading"><p class="eyebrow">법령 관리</p><h1>법령 마스터</h1><p>관리할 법령과 행정규칙을 찾아 등록하고, 개정 여부를 추적합니다.</p></header>
 <section id="tab-laws" class="tab-panel active">
       <div class="panel-box">
         <h2>법령·고시 검색해서 추가</h2>
         <div class="row">
-          <select id="searchSourceType">
+          <label class="field-label" for="searchSourceType">검색 구분<select id="searchSourceType">
             <option value="all">전체(법령+행정규칙)</option>
             <option value="law">법령(법률/시행령/시행규칙)</option>
             <option value="admrul">행정규칙(고시/예규/훈령)</option>
-          </select>
-          <input id="searchQuery" type="text" placeholder="입력하면 자동으로 검색됩니다 (예: 산업안전보건법)" style="flex: 1; min-width: 240px;" />
+          </select></label>
+          <label class="field-label" for="searchQuery">추가할 법령 검색<input id="searchQuery" type="text" placeholder="입력하면 자동으로 검색됩니다 (예: 산업안전보건법)" style="flex: 1; min-width: 240px;" /></label>
           <button id="searchBtn" class="btn">검색</button>
         </div>
-        <div id="searchResults" class="table-wrap">
-</div>
+        <div id="searchResults" class="table-wrap" tabindex="0" role="region" aria-label="법령 마스터 목록"></div>
       </div>
 
       <div class="panel-box">
         <h2>현재 관리중인 법령</h2>
         <div class="row">
-          <input id="lawsFilterInput" type="text" placeholder="이름/소관부처로 빠르게 찾기" />
+          <label class="field-label" for="lawsFilterInput">관리 법령 검색<input id="lawsFilterInput" type="text" placeholder="이름/소관부처로 빠르게 찾기" /></label>
         </div>
-        <div id="lawsTable" class="table-wrap">
+        <div id="lawsTable" class="table-wrap" tabindex="0" role="region" aria-label="법령 마스터 목록">
 <table>
 <thead>
 <tr>
-<th>명칭</th>
-<th>구분 / 상태</th>
+<th scope="col">명칭</th>
+<th scope="col">구분 / 상태</th>
 </tr>
 </thead>
 <tbody>

@@ -27,15 +27,18 @@ Java 17 · Spring Boot · Thymeleaf · MyBatis · Oracle을 사용한다. 로컬
     │   ├── client/              외부 API와 HTTP 처리
     │   ├── scheduler/           자동 작업 호출
     │   ├── config/              보안·백그라운드 실행기
+    │   ├── security/            사번 인증 Provider·세션 사용자
     │   ├── exception/           API 오류 응답
     │   └── support/             문자열·뉴스 중복 판별 등
     └── resources/
         ├── application.yaml     공통·Oracle 설정
         ├── application-local.yaml
+        ├── application-dev-login.yaml
         ├── mapper/              업무별 SQL XML
         ├── db/                  초기 스키마·증분 변경 SQL
         ├── data/demo-laws.json  로컬 예시 법령
         ├── templates/fragments/layout.html
+        ├── templates/index.html 사번 입력 로그인
         ├── templates/pages/     메뉴별 Thymeleaf 화면
         └── static/              CSS·JavaScript·아이콘
 ```
@@ -67,11 +70,12 @@ Java 17 · Spring Boot · Thymeleaf · MyBatis · Oracle을 사용한다. 로컬
 | `service` | 업무 조건, 변경 이력, 트랜잭션, 동기화 처리 |
 | `mapper` | 업무별 조회·저장 메서드 선언 |
 | `resources/mapper` | 명시적인 테이블·컬럼과 검색·집계 SQL |
-| `domain` | DB 행에 대응하는 JavaBean |
+| `domain` | DB 행에 대응하는 JavaBean, 인사 뷰 조회용 `EmployeeInfo` record |
 | `dto` | 외부 입력과 검색·집계 응답 타입 |
 | `client` | 법령·KOSHA·RSS 등 외부 HTTP 응답 처리 |
 | `scheduler` | 주기별 Service 호출 |
 | `config` | 보안, 백그라운드 실행기 설정 |
+| `security` | 임시 사번 인증과 `LoginUser` 세션 정보 |
 
 범용 `DataMapper`, 테이블 정의 enum, `MonitoringService`를 제거하고 법령·사규·개정·가이드·뉴스·설정을
 개별 Mapper/Service로 분리했다. Mapper 위에 같은 기능의 Repository를 추가하지 않는다.
@@ -247,23 +251,69 @@ KOSHA 목록 동기화는 예약되어 있지 않다. 서버가 종료되면 예
 | `SAFETY_LAW_DB_URL` | Oracle JDBC URL, 기본 `jdbc:oracle:thin:@localhost:1521/XEPDB1` |
 | `SAFETY_LAW_DB_USERNAME`, `SAFETY_LAW_DB_PASSWORD` | Oracle 계정·비밀번호 |
 | `SAFETY_LAW_FILES_DIR` | KOSHA PDF 디렉터리, 기본 `./data/kosha` |
-| `DASHBOARD_USERNAME`, `DASHBOARD_PASSWORD` | HTTP Basic 로그인 정보 |
-| `LAW_API_OC`, `KOSHA_GUIDE_API_KEY` | 외부 API 인증키의 초기 설정값 |
+| `DEV_LOGIN_ENABLED` | 임시 사번 로그인 활성화. 기본 false, local/dev-login 프로필은 true |
+| `SESSION_COOKIE_SECURE` | HTTPS 전용 세션 쿠키 여부, 기본 false. HTTPS 운영에서는 true |
+| `LAW_API_OC`, `KOSHA_GUIDE_API_KEY`, `KOSHA_GUIDE_API_URL` | 저장소 공통 API 인증정보·조회 주소를 덮어쓰는 설정값 |
 | `AUTO_SYNC_DELAY_MS` | 법령 자동 작업 지연, 기본 `86400000` |
 | `NEWS_FETCH_DELAY_MS` | 뉴스 자동 작업 지연, 기본 `10800000` |
 
 기본 설정은 Oracle이다. `local` 프로필은 H2와 로컬 스키마 초기화를 적용하고 `app.demo=true`로 설정한다.
 H2와 기본 첨부 경로는 **실행 작업 디렉터리 기준**이므로 실행 위치를 바꾸면 다른 데이터 경로를 사용할 수 있다.
 
-`SettingsService`는 기본값에 환경변수를 적용한 뒤 DB의 설정값으로 덮어쓴다. 따라서 화면에서 이미
+사용자 요청에 따라 `application.yaml`에 법령 OC와 KOSHA 인증키·조회 주소가 포함되어 있다.
+`SettingsService`는 공통 설정과 환경변수를 읽은 뒤 DB의 설정값으로 덮어쓴다. 우선순위는 DB > 환경변수 > 공통 설정이다. 따라서 화면에서 이미
 저장한 API 키·피드 등은 환경변수만 바꿔도 바뀌지 않을 수 있다. DB에 저장한 값을 함께 확인해야 한다.
 API 키는 설정 DB에 문자열로 저장되며 별도의 암호화 저장 계층은 없다.
 
 ### 접근과 오류 처리
 
-`WebConfiguration`에서 계정이 설정되면 HTTP Basic 인증을 사용한다. 계정명·비밀번호는 함께 설정해야 하며
-`127.0.0.1` 이외의 바인딩에는 로그인 정보가 필요하다. `/api/health`와 `/actuator/health`는 인증 예외다.
-Thymeleaf가 CSRF 토큰을 전달하고 `core.js`가 변경 요청 헤더에 붙인다.
+`WebConfiguration`은 모든 업무 화면과 API에 세션 인증을 요구한다. 로그인 화면·처리 경로,
+정적 CSS/JS/아이콘, 오류 처리, `/api/health`와 `/actuator/health`는 인증 예외다.
+HTTP Basic과 로그인 정보 미설정 시 전체 허용하던 경로는 제거했다.
+Thymeleaf가 CSRF 토큰을 전달하고 `core.js`가 변경 요청 헤더에 붙인다. 로그인·로그아웃 폼도 CSRF를 적용한다.
+
+### 인사 뷰와 로그인 흐름
+
+```text
+GET / (또는 /index, /index.html, /login) → LoginController → templates/index.html
+POST /login/employee → Spring Security formLogin 필터
+                    → DevelopmentLoginProvider → EmployeeService → EmployeeMapper
+                    → IS_USER_INFO_SSO_V → LoginUser를 SecurityContext/세션에 저장
+                    → 저장된 메뉴 GET 주소 또는 /dashboard
+POST /logout → 인증·세션 제거 → /login?logout
+```
+
+로그인 POST는 Controller에서 직접 세션을 만들지 않고 Spring Security 표준 필터를 사용한다.
+인증 성공 시 세션 ID를 변경하고, 쿠키는 HttpOnly·SameSite=Lax이며 세션 유휴 만료는 30분이다.
+요청 저장은 업무 화면 GET만 대상으로 하며 API·actuator 요청과 쓰기 요청은 저장하지 않는다.
+미인증 API는 JSON 401, 인증 상태의 CSRF 오류는 JSON 403이다. `core.js`는 401에서 현재 화면을
+다시 GET하여 로그인 후 원래 화면으로 돌아오게 한다. 실패한 쓰기를 자동 재실행하지 않는다.
+
+| Oracle 인사 뷰 컬럼 | `EmployeeInfo` 필드 | 용도 |
+| --- | --- | --- |
+| `EMPCD` | `employeeCode` | 세션 사용자 식별값·사번 로그인 조회 |
+| `HNAME` | `name` | 이름 표시 |
+| `DEPTCDNM` | `departmentName` | 부서명 표시 |
+| `HANDPHONE` | `phoneNumber` | 세션 내 연락처 정보 |
+| `EMAIL` | `email` | 세션 내 이메일·향후 pid 식별 |
+
+`EmployeeMapper.xml`은 기존 뷰를 SELECT만 한다. 인사 데이터 복제 테이블이나 Repository는 추가하지 않는다.
+DB 계정에 뷰 SELECT 권한이 필요하며 다른 스키마라면 동명 synonym을 준비한다.
+Oracle 스키마 SQL에는 인사 뷰 DDL을 넣지 않는다. `schema-local.sql`에만 H2 예시 뷰와 `LOCAL001`을 둔다.
+중복 식별 방지를 위해 최대 두 행을 조회하고 한 명으로 식별되지 않으면 실패한다.
+DB 오류는 로그인 실패 안내로 변환하며 사용자 정보나 DB 상세 오류를 화면에 노출하지 않는다.
+
+기본 Oracle 설정에서는 임시 로그인이 꺼져 있으며 `dev-login` 프로필 또는 `DEV_LOGIN_ENABLED=true`로 켠다.
+`local`은 예시 인사 정보로 임시 로그인을 켠다. 모든 로그인 사용자는 현재 `ROLE_USER`로 같은 업무 데이터를 사용한다.
+사용자별 권한, 작성자 자동 기록, 인사 정보 수정 기능은 포함하지 않는다.
+
+`EmployeeService.findForVerifiedPid`는 **실제 SSO 검증을 마친 뒤** 호출할 조회 지점이다.
+사번 또는 이메일의 `@` 앞 ID(대소문자 무시)를 조회하고 여러 사용자와 일치하면 거절한다.
+현재 외부 pid 파라미터나 헤더를 신뢰하는 HTTP 엔드포인트는 없다. SSO 가이드 수령 후 검증 처리와 세션 인증을 연결해야 한다.
+사번 입력 자체는 비밀번호 검증이 없는 임시 접속이므로 SSO를 연결할 때 비활성화한다.
+
+인사 정보는 로그인 시점의 스냅샷이며 세션 동안 유지된다. 같은 데이터를 함께 관리하려면 사용자는
+각자 로컬 DB를 실행하는 대신 공용 애플리케이션 서버와 Oracle을 사용해야 한다.
 
 `RemoteClient`는 공개 HTTP(S) URL을 검사하고 내부·루프백 주소 요청을 제한한다.
 외부 응답은 최대 20MB이며 연결·요청 시간 제한이 있다. 외부 오류에 인증키가 포함된 URL을 그대로 노출하지 않는다.
@@ -294,3 +344,13 @@ Thymeleaf가 CSRF 토큰을 전달하고 `core.js`가 변경 요청 헤더에 �
 이번 변경 작업 중 운영 DB나 로컬 데이터 파일에는 SQL을 실행하지 않았다.
 기존 Python 데이터는 별도 이관 대상이다. 이전 Python 코드, 설치 도구와 배포 설정은 제거했다.
 현재 실행과 배포는 Spring Boot와 Gradle JAR를 기준으로 한다.
+
+## 화면 공통 계층
+
+`fragments/layout.html`은 업무별 사이드 메뉴·헤더·사용자 정보·법령 동기화·도움말을 제공합니다.
+`static/css/style.css`에 색상·글꼴·간격·반응형·입력/표/팝업 기준을 모으고 로그인 전용 배치는 `login.css`에서 처리합니다.
+`main.js`는 `ui.js`의 공통 메뉴와 팝업 포커스 처리를 초기화한 다음 기존 업무 모듈을 연결합니다.
+팝업은 업무 모듈의 `hidden` 상태 변경을 관찰하고, 배경 비활성화에 팝업 자체가 포함되지 않도록 body 직계 자식으로 이동합니다.
+대시보드 요약은 서버가 렌더링한 링크를 유지하면서 숫자만 갱신합니다.
+`login.js`는 폼 제출 동안 로그인 버튼 중복 클릭을 방지합니다. 인증·업무 API 구조는 그대로 사용합니다.
+자세한 화면 기준은 [UI/UX 구성](UI-UX.md)에 정리되어 있습니다.

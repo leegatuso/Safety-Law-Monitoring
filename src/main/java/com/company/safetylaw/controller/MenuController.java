@@ -1,8 +1,10 @@
 package com.company.safetylaw.controller;
 
+import com.company.safetylaw.security.LoginUser;
 import com.company.safetylaw.service.*;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +39,11 @@ public class MenuController {
     }
 
     @ModelAttribute
-    public void common(Model model, @Value("${app.demo}") boolean demo) {
+    public void common(
+            Model model,
+            @Value("${app.demo}") boolean demo,
+            @AuthenticationPrincipal LoginUser currentUser) {
+        model.addAttribute("currentUser", currentUser);
         model.addAttribute("localPreview", demo);
         model.addAttribute("headerCounts", dashboard.counts());
         model.addAttribute("initialData", new LinkedHashMap<String, Object>());
@@ -48,7 +54,7 @@ public class MenuController {
         return "pages/" + page;
     }
 
-    @GetMapping({"/", "/dashboard"})
+    @GetMapping("/dashboard")
     public String dashboard(Model model) {
         var summary = dashboard.summary();
         model.addAttribute("summary", summary);

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.company.safetylaw.mapper.EmployeeMapper">
+    <resultMap id="employee" type="com.company.safetylaw.domain.EmployeeInfo">
+        <constructor>
+            <arg column="EMPCD" javaType="java.lang.String"/>
+            <arg column="HNAME" javaType="java.lang.String"/>
+            <arg column="DEPTCDNM" javaType="java.lang.String"/>
+            <arg column="HANDPHONE" javaType="java.lang.String"/>
+            <arg column="EMAIL" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+    <sql id="columns">
+        TRIM(EMPCD) AS EMPCD, TRIM(HNAME) AS HNAME, TRIM(DEPTCDNM) AS DEPTCDNM,
+        TRIM(HANDPHONE) AS HANDPHONE, TRIM(EMAIL) AS EMAIL
+    </sql>
+    <select id="findByEmployeeCode" resultMap="employee">
+        SELECT DISTINCT <include refid="columns"/>
+        FROM IS_USER_INFO_SSO_V
+        WHERE TRIM(EMPCD) = #{employeeCode}
+        FETCH FIRST 2 ROWS ONLY
+    </select>
+    <!-- SSO 검증이 끝난 pid를 조회할 때 사용한다. 이 조회 자체가 SSO 인증은 아니다. -->
+    <select id="findByPid" resultMap="employee">
+        SELECT DISTINCT <include refid="columns"/>
+        FROM IS_USER_INFO_SSO_V
+        WHERE TRIM(EMPCD) = #{pid}
+           OR (INSTR(TRIM(EMAIL), '@') &gt; 1
+               AND LOWER(SUBSTR(TRIM(EMAIL), 1, INSTR(TRIM(EMAIL), '@') - 1)) = LOWER(#{pid}))
+        FETCH FIRST 2 ROWS ONLY
+    </select>
+</mapper>

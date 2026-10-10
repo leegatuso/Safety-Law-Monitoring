@@ -2,8 +2,9 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
 <body>
 <section th:fragment="content">
+<header class="page-heading"><p class="eyebrow">법령 관리</p><h1>법령 개정 이력</h1><p>개정 내용을 확인하고 검토 상태를 관리하세요.</p></header>
 <section id="tab-revisions" class="tab-panel active">
-      <div class="row">
+      <div class="row filter-toolbar">
         <label>상태 필터:
           <select id="revisionStatusFilter">
             <option value="">전체</option>
@@ -13,27 +14,27 @@
             <option value="해당없음">해당없음</option>
           </select>
         </label>
-        <input id="revisionsSearchInput" type="text" placeholder="법령명으로 빠르게 찾기" />
+        <label class="field-label" for="revisionsSearchInput">법령명 검색<input id="revisionsSearchInput" type="text" placeholder="법령명으로 빠르게 찾기" /></label>
         <span id="revisionLawFilterChip" hidden>
 </span>
       </div>
-      <div class="row">
+      <div class="row selection-toolbar">
         <span id="revisionsSelectedCount" class="hint">0건 선택됨</span>
-        <select id="revisionsBulkStatus">
+        <label class="field-label" for="revisionsBulkStatus">변경할 상태<select id="revisionsBulkStatus">
           <option value="미검토">미검토</option>
           <option value="검토중">검토중</option>
           <option value="반영완료">반영완료</option>
           <option value="해당없음">해당없음</option>
-        </select>
+        </select></label>
         <button id="revisionsBulkApplyBtn" class="btn" disabled>선택 항목 일괄 변경</button>
         <button id="revisionsBulkDeleteBtn" class="btn btn-danger" disabled>선택 항목 삭제</button>
       </div>
-      <div id="revisionsTable" class="table-wrap">
+      <div id="revisionsTable" class="table-wrap" tabindex="0" role="region" aria-label="법령 개정 이력 목록">
 <table>
 <thead>
 <tr>
-<th>명칭</th>
-<th>구분 / 상태</th>
+<th scope="col">명칭</th>
+<th scope="col">구분 / 상태</th>
 </tr>
 </thead>
 <tbody>

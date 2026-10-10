@@ -2,29 +2,27 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
 <body>
 <section th:fragment="content">
+<header class="page-heading"><p class="eyebrow">사규 관리</p><h1>사규 개정 이력</h1><p>저장 당시의 버전과 변경 사유, 담당자를 확인합니다.</p></header>
 <section class="tab-panel active" id="tab-document-revisions">
-<div class="page-heading">
-<h2>사규 개정 이력</h2>
-<p>사규 저장 당시의 버전, 변경 사유, 담당자와 근거 법령을 확인합니다. 기존 사규의 과거 이력은 자동으로 복원되지 않습니다.</p>
-</div>
-<form method="get" th:action="@{/document-revisions}" class="row">
+
+<form method="get" th:action="@{/document-revisions}" class="row filter-toolbar">
 <input th:if="${documentId != null}" type="hidden" name="document_id" th:value="${documentId}"/>
-<input name="query" type="search" th:value="${query}" placeholder="사규명 검색" aria-label="사규명 검색"/>
-<button class="btn btn-primary">검색</button>
+<label class="field-label">사규명<input name="query" type="search" th:value="${query}" placeholder="사규명 검색" aria-label="사규명 검색"/></label>
+<button class="btn btn-primary">검색</button><a class="btn" th:href="@{/document-revisions}">전체 이력</a>
 <a class="btn" th:href="@{/document-impacts}">법령 개정에 따른 검토 대상</a>
 </form>
 <p class="hint">최신 200건을 표시합니다. 사규를 수정하면 이전 상태와 새 저장 이력이 보존됩니다.</p>
-<div class="table-wrap">
+<div class="table-wrap" tabindex="0" role="region" aria-label="사규 개정 이력 목록">
 <table>
 <thead>
 <tr>
-<th>사규</th>
-<th>문서 번호</th>
-<th>버전 / 개정일</th>
-<th>변경 사유</th>
-<th>담당자</th>
-<th>저장 시각 (UTC)</th>
-<th>상세</th>
+<th scope="col">사규</th>
+<th scope="col">문서 번호</th>
+<th scope="col">버전 / 개정일</th>
+<th scope="col">변경 사유</th>
+<th scope="col">담당자</th>
+<th scope="col">저장 시각 (UTC)</th>
+<th scope="col">상세</th>
 </tr>
 </thead>
 <tbody>

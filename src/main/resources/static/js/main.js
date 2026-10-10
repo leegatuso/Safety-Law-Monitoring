@@ -2,6 +2,7 @@
 // 시점에 한 번 배선하는 역할만 한다 - 실제 로직은 각 모듈 안에 있다.
 
 import { initTabs, loadTab } from "./tabs.js";
+import { initWorkspaceUI } from "./ui.js";
 import { initLawsTab } from "./laws.js";
 import { initRevisionsTab } from "./revisions.js";
 import { initKoshaGuideForm, initKoshaGuideSearch, initKoshaGuideSync, initKoshaGuideBulkImport, initKoshaGuideBulkDelete, initKoshaGuideContentCache } from "./kosha-guide.js";
@@ -18,6 +19,7 @@ import { loadIntegrationStatus, initIntegrationStatusModal } from "./integration
 
 
 document.addEventListener("DOMContentLoaded", () => {
+  initWorkspaceUI();
   initTabs();
   initSyncButton(); initAlarmBell(); initHelpModal(); initIntegrationStatusModal();
   const page = document.body.dataset.page;

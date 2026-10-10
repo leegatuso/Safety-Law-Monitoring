@@ -43,7 +43,7 @@ export function renderRevisionsList(revisions, mode = "full") {
             : fmtDate(r.promulgation_date);
           return `
           <tr>
-            ${showCheckbox ? `<td><input type="checkbox" class="revision-row-checkbox" data-revision-id="${r.id}" ${selectedRevisionIds.has(r.id) ? "checked" : ""}></td>` : ""}
+            ${showCheckbox ? `<td><input type="checkbox" aria-label="${escapeHtml(r.tracked_law_name)} 개정 선택" class="revision-row-checkbox" data-revision-id="${r.id}" ${selectedRevisionIds.has(r.id) ? "checked" : ""}></td>` : ""}
             <td>${nameCell}${isInitial ? ` <span class="hint">(신규 등록)</span>` : ""}</td>
             <td>${escapeHtml(r.tracked_law_category || "-")}</td>
             <td>${promCell}${r.previous_promulgation_date && r.previous_promulgation_date !== r.promulgation_date ? `<br><span class="hint">이전: ${fmtDate(r.previous_promulgation_date)}</span>` : ""}</td>

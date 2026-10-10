@@ -43,6 +43,12 @@ export async function api(path, options = {}) {
     ...options,
     headers,
   });
+  if (res.status === 401) {
+    // GET the current page so Spring Security can save its address before login.
+    // Never automatically repeat a failed write request.
+    window.location.reload();
+    throw new Error('로그인이 만료되었습니다. 다시 로그인해 주세요.');
+  }
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -60,10 +66,18 @@ export async function api(path, options = {}) {
 export function toast(message, isError = false) {
   const el = document.getElementById("toast");
   el.textContent = message;
+  const dismiss = document.createElement('button');
+  dismiss.type = 'button';
+  dismiss.className = 'toast-dismiss';
+  dismiss.textContent = '닫기';
+  dismiss.addEventListener('click', () => { el.hidden = true; });
+  el.append(dismiss);
   el.classList.toggle("error", isError);
+  el.setAttribute('role', isError ? 'alert' : 'status');
+  el.setAttribute('aria-live', isError ? 'assertive' : 'polite');
   el.hidden = false;
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => { el.hidden = true; }, 4000);
+  if (!isError) toast._t = setTimeout(() => { el.hidden = true; }, 6000);
 }
 
 export function fmtDate(d) {
@@ -91,7 +105,7 @@ export function statusBadge(status) {
 
 export function statusSelect(revisionId, status) {
   return `
-    <select class="badge-select ${STATUS_BADGE_CLASS[status] || ""}" data-status-select="${revisionId}">
+    <select aria-label="개정 검토 상태" class="badge-select ${STATUS_BADGE_CLASS[status] || ""}" data-status-select="${revisionId}">
       ${["미검토", "검토중", "반영완료", "해당없음"].map((s) => `<option value="${s}" ${s === status ? "selected" : ""}>${s}</option>`).join("")}
     </select>
   `;

@@ -66,7 +66,8 @@ public class LawClient {
                                                 "page",
                                                 page))))
                         .getDocumentElement();
-        if (!text(root, "resultCode", "에러코드").isBlank() && elements(root, source).isEmpty())
+        String resultCode = text(root, "resultCode", "에러코드");
+        if (!resultCode.isBlank() && !resultCode.equals("00"))
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "법령 API 인증 또는 요청 오류입니다.");
         var result = new ArrayList<Map<String, Object>>();
         for (var item : elements(root, source)) {

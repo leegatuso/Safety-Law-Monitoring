@@ -2,26 +2,26 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
 <body>
 <section th:fragment="content">
+<header class="page-heading"><p class="eyebrow">법령 관리</p><h1>본문 검색</h1><p>법령명뿐 아니라 조문 속 키워드와 문장까지 찾아봅니다.</p></header>
 <section id="tab-keyword-search" class="tab-panel active">
       <div class="panel-box">
         <h2>키워드 검색</h2>
-        <p class="hint">
+        <details class="usage-note"><summary>사용 안내</summary><p class="hint">
           내가 등록해두었거나, 설정 &gt; 법령 본문 캐시로 미리 받아둔 법령·고시를 대상으로 키워드나 문장을 검색합니다.
           법령명뿐 아니라 조문 본문 내용까지 검색되므로, 예를 들어 "화기작업"으로 검색하면 이름에 "화기작업"이 없어도
           본문에 그 내용이 포함된 법령·고시까지 모두 찾아줍니다. 캐시가 비어 있으면 결과가 나오지 않으니, 먼저
           <b>설정 &gt; 법령 본문 캐시</b>에서 새로고침해두세요.
-        </p>
+        </p></details>
         <div class="row">
-          <select id="keywordSearchSourceType">
+          <label class="field-label" for="keywordSearchSourceType">검색 구분<select id="keywordSearchSourceType">
             <option value="all">전체(법령+행정규칙)</option>
             <option value="law">법령(법률/시행령/시행규칙)</option>
             <option value="admrul">행정규칙(고시/예규/훈령)</option>
-          </select>
-          <input id="keywordSearchInput" type="text" placeholder="키워드 또는 문장으로 검색 (예: 화기작업)" style="flex: 1;" />
+          </select></label>
+          <label class="field-label" for="keywordSearchInput">검색어<input id="keywordSearchInput" type="text" placeholder="키워드 또는 문장으로 검색 (예: 화기작업)" style="flex: 1;" /></label>
           <button id="keywordSearchBtn" class="btn btn-primary">검색</button>
         </div>
-        <div id="keywordSearchResults" class="table-wrap">
-</div>
+        <div id="keywordSearchResults" class="table-wrap" tabindex="0" role="region" aria-label="본문 검색 목록"></div>
       </div>
     </section>
 </section>

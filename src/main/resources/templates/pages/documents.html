@@ -2,24 +2,25 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout(~{::content})}">
 <body>
 <section th:fragment="content">
+<header class="page-heading"><p class="eyebrow">사규 관리</p><h1>사규 목록</h1><p>절차서·지침서와 근거 법령을 한곳에서 관리합니다.</p></header>
 <section id="tab-documents" class="tab-panel active">
       <div class="panel-box">
         <div class="row" style="justify-content: space-between; margin-bottom: 0;">
-          <h2 style="margin: 0;">사규</h2>
+          <h2 style="margin: 0;">등록된 사규</h2>
           <button id="docAddBtn" class="btn btn-primary">+ 사규 추가</button>
         </div>
       </div>
-      <div class="row">
-        <input id="documentsSearchInput" type="text" placeholder="제목/문서번호/담당자/키워드/근거 법령으로 빠르게 찾기" style="flex: 1;" />
+      <div class="row filter-toolbar">
+        <label class="field-label" for="documentsSearchInput">사규 검색<input id="documentsSearchInput" type="text" placeholder="제목/문서번호/담당자/키워드/근거 법령으로 빠르게 찾기" style="flex: 1;" /></label>
         <span id="documentsSelectedCount" class="hint">0건 선택됨</span>
         <button id="documentsBulkDeleteBtn" class="btn btn-danger" disabled>선택 항목 삭제</button>
       </div>
-      <div id="documentsTable" class="table-wrap">
+      <div id="documentsTable" class="table-wrap" tabindex="0" role="region" aria-label="사규 목록">
 <table>
 <thead>
 <tr>
-<th>명칭</th>
-<th>구분 / 상태</th>
+<th scope="col">명칭</th>
+<th scope="col">구분 / 상태</th>
 </tr>
 </thead>
 <tbody>
@@ -44,10 +45,7 @@
         <button type="button" id="docModalCloseBtn" class="modal-close" title="닫기" aria-label="닫기">&times;</button>
         <h2 id="documentFormTitle">사규 추가</h2>
         <form id="documentForm" class="grid-form">
-<label class="full">변경 사유 <input id="docChangeReason" type="text" maxlength="4000" placeholder="변경 내용을 입력하세요" />
-</label>
-<label>변경 담당자 <input id="docChangedBy" type="text" maxlength="64" />
-</label>
+
           <input type="hidden" id="docId" />
           <label>구분
             <select id="docType">
@@ -59,7 +57,7 @@
           </label>
           <label>문서번호 <input id="docNumber" type="text" />
 </label>
-          <label>제목 <input id="docTitle" type="text" required />
+          <label class="full"><span>제목 <span class="required-text">필수</span></span><input id="docTitle" type="text" required />
 </label>
           <label>개정번호 <input id="docRevisionNo" type="text" />
 </label>
@@ -72,24 +70,28 @@
           <label class="full">키워드(해시태그) <input id="docTags" type="text" placeholder="#밀폐공간 #공기호흡기" />
             <span class="hint">근거 법령으로 직접 매핑하지 않아도, 이 키워드가 이름/본문에 들어간 법령·고시가 개정되면 자동으로 이 사규가 개정 필요 사항에 뜹니다. 공백으로 구분, "#"은 없어도 됩니다.</span>
           </label>
-          <label class="full">근거 법령 (이 사규의 근거가 되는 법령·고시를 선택하면, 해당 법령이 개정될 때 이 사규가 대시보드의 "개정 필요 사항"에 표시됩니다)
+          <div class="full field-label"><span>근거 법령</span><p class="hint">연결한 법령이 개정되면 이 사규가 검토 대상으로 표시됩니다.</p>
             <div class="row">
-              <select id="docLawCategoryFilter">
+              <select id="docLawCategoryFilter" aria-label="근거 법령 구분">
                 <option value="">구분: 전체</option>
                 <option value="0">법률</option>
                 <option value="1">대통령령</option>
                 <option value="2">부령(시행규칙)</option>
                 <option value="3">고시·예규·훈령 등</option>
               </select>
-              <input id="docLawSearchInput" type="text" placeholder="법령명으로 검색" />
+              <input aria-label="근거 법령 검색" id="docLawSearchInput" type="text" placeholder="법령명으로 검색" />
             </div>
             <div id="docLawCheckboxes" class="checkbox-list">
 </div>
-          </label>
+          </div>
           <label class="full">비고 <textarea id="docNote">
 </textarea>
 </label>
-          <div class="form-actions">
+          <div class="form-divider full">변경 기록</div><label class="full">변경 사유 <input id="docChangeReason" type="text" maxlength="4000" placeholder="변경 내용을 입력하세요" />
+</label>
+<label>변경 담당자 <input id="docChangedBy" type="text" maxlength="64" />
+</label>
+<div class="form-actions">
             <button type="submit" class="btn btn-primary">저장</button>
             <button type="button" id="docCancelBtn" class="btn">취소</button>
           </div>
